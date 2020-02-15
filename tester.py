@@ -1,3 +1,4 @@
+import pygame
 import pymap
 
 tile_map = pymap.tiled("map", (3,4))
