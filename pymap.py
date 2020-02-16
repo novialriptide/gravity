@@ -1,14 +1,17 @@
 import pygame
 
-class tiled:
-    def __init__(self, map_name, map_size, map_textures_path):
+class tile:
+    pass
+
+class tiledmap:
+    def __init__(self, map_options):
+        map_size, map_textures_path, map_textures_size = map_options
         tilemap_template = {
-            "name": None,
             "map_contents": [[]] #map_contents[layer_number][row][column]
         }
+        self.tile_width, self.tile_height = map_textures_size
         self.rows, self.columns = map_size
         self.tilemap = tilemap_template
-        self.tilemap["name"] = map_name
         self.map_textures_path = map_textures_path
         row_template = []
         for column in range(self.columns):
@@ -29,21 +32,24 @@ class tiled:
         return len(self.tilemap["map_contents"][0][0])
     def get_tilemap(self):
         return self.tilemap
-    def save(self, file_path):
+    def save(self, file_path, file_name):
         """Saves the map into a file"""
         pass
-    def pygame_render(self, location, surface, lighting=False):
+    def pygame_render(self, location, lighting=False):
         """Renders the whole map"""
+        surface = pygame.Surface((100,100))
         for layer in range(self.get_layers()):
-            pygame_render(location, pygame_window, layer, lighting=lighting)
-    def pygame_render(self, location, surface, layer_id, lighting=False):
+            pygame_render(location, layer, lighting=lighting)
+    def pygame_render(self, location, layer_id, lighting=False):
         """Renders a specific layer"""
-        for row in range(self.get_rows):
-            for column in range(self.get_columns):
-                window.blit(
-                    tilemap.textures[tilemap.tilemap[row][column]], 
-                    (column*tilemap.tilesize, row*tilemap.tilesize)
-                )
+        surface = pygame.Surface((100,100))
+
+        for row in range(self.get_rows()):
+            for column in range(self.get_columns()):
+                tileTexture = "something"
+                location = (column*tilemap.tilesize, row*tilemap.tilesize)
+                surface.blit(texture, location)
+        return surface
     def test_for_collusions(self, hitbox):
         """Tests for collusions if the hitbox is inside a wall."""
         x1,x2,y1,y2 = hitbox
