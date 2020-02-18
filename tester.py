@@ -7,7 +7,6 @@ pygame.display.set_caption("Tester")
 
 map_options = (
     (3,4),
-    "",
     (5,5)
 )
 tile_map = pymap.tiled(map_options)
