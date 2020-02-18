@@ -1,18 +1,28 @@
 import pygame
 
-class tile:
-    pass
+class tileset:
+    def __init__(self, tile_textures, tile_size, tiles_distance=0):
+        pass
+    def get_textures_path(self):
+        pass
+    def get_width():
+        pass
+    def get_height():
+        pass
+    def pygame_render(self, tile_id):
+        pass
 
 class tiledmap:
     def __init__(self, map_options):
-        map_size, map_textures_path, map_textures_size = map_options
+        map_size, tileset_class = map_options
         tilemap_template = {
             "map_contents": [[]] #map_contents[layer_number][row][column]
         }
-        self.tile_width, self.tile_height = map_textures_size
+        self.tile_width = tileset_class.get_width()
+        self.tile_height = tileset_class.get_height()
         self.rows, self.columns = map_size
         self.tilemap = tilemap_template
-        self.map_textures_path = map_textures_path
+        self.map_textures_path = tileset_class.get_textures_path()
         row_template = []
         for column in range(self.columns):
             row_template.append(0)
@@ -35,13 +45,11 @@ class tiledmap:
     def save(self, file_path, file_name):
         """Saves the map into a file"""
         pass
-    def pygame_render(self, location, lighting=False):
-        """Renders the whole map"""
-        surface = pygame.Surface((100,100))
-        for layer in range(self.get_layers()):
-            pygame_render(location, layer, lighting=lighting)
-    def pygame_render(self, location, layer_id, lighting=False):
-        """Renders a specific layer"""
+    def pygame_render_chunk(self, chunk_location):
+        """Renders a section of a layer of the map"""
+        pass
+    def pygame_render_layer(self, layer_id, lighting=False):
+        """Renders a specific layer of the map"""
         surface = pygame.Surface((100,100))
 
         for row in range(self.get_rows()):
@@ -50,6 +58,11 @@ class tiledmap:
                 location = (column*tilemap.tilesize, row*tilemap.tilesize)
                 surface.blit(texture, location)
         return surface
+    def pygame_render(self, lighting=False):
+        """Renders the whole map"""
+        surface = pygame.Surface((100,100))
+        for layer in range(self.get_layers()):
+            pygame_render(location, layer, lighting=lighting)
     def test_for_collusions(self, hitbox):
         """Tests for collusions if the hitbox is inside a wall."""
         x1,x2,y1,y2 = hitbox
