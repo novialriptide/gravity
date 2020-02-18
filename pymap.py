@@ -11,11 +11,8 @@ class tileset:
         return self.width
     def get_height():
         return self.height
-    def pygame_render1(self, tile_id):
-        """Returns an image of a tile by order"""
-        pass
-    def pygame_render2(self, location):
-        """Returns an image of a tile in it's specific location"""
+    def pygame_render(self, tile_id):
+        """Returns an image of a tile"""
         pass
 
 class tiledmap:
@@ -39,8 +36,9 @@ class tiledmap:
         """Changes a tile ID texture"""
         row, column = location
         self.tilemap["map_contents"][layer_id][row][column] = tile_id
-    def get_name(self):
-        return self.tilemap["name"]
+    def get_tile_id(self, location, layer):
+        row, column = location
+        return self.tilemap["map_contents"][layer][row][column]
     def get_layer_count(self):
         return len(self.tilemap["map_contents"])
     def get_rows(self):
@@ -71,9 +69,11 @@ class tiledmap:
 
         for row in range(self.get_rows()):
             for column in range(self.get_columns()):
-                tileTexture = "something"
-                location = (column*tilemap.tilesize, row*tilemap.tilesize)
-                surface.blit(texture, location)
+                tile_id = self.get_tile_id((row, column), layer_id)
+                surface.blit(
+                    tileset_class.pygame_render(tile_id), 
+                    (column*tilemap.tilesize, row*tilemap.tilesize)
+                )
         return surface
     def pygame_render_map(self, render_size=1, lighting=False):
         """Renders the whole map"""
@@ -83,7 +83,7 @@ class tiledmap:
         ))
         surface = pygame.Surface((100,100))
         for layer in range(self.get_layer_count()):
-            pygame_render(location, layer, lighting=lighting)
+            pygame_render(location, layer, render_size=1, lighting=lighting)
     def test_for_collusions(self, hitbox):
         """Tests for collusions if the hitbox is inside a wall."""
         x1,x2,y1,y2 = hitbox
