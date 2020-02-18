@@ -2,14 +2,20 @@ import pygame
 
 class tileset:
     def __init__(self, tile_textures, tile_size, tiles_distance=0):
-        pass
+        self.tile_textures = tile_textures
+        self.width, self.height = tile_size
+        self.tiles_distance = tiles_distance
     def get_textures_path(self):
-        pass
+        return self.tile_textures
     def get_width():
-        pass
+        return self.width
     def get_height():
+        return self.height
+    def pygame_render1(self, tile_id):
+        """Returns an image of a tile by order"""
         pass
-    def pygame_render(self, tile_id):
+    def pygame_render2(self, location):
+        """Returns an image of a tile in it's specific location"""
         pass
 
 class tiledmap:
@@ -34,7 +40,7 @@ class tiledmap:
         self.tilemap["map_contents"][layer_id][row][column] = tile_id
     def get_name(self):
         return self.tilemap["name"]
-    def get_layers(self):
+    def get_layer_count(self):
         return len(self.tilemap["map_contents"])
     def get_rows(self):
         return len(self.tilemap["map_contents"][0])
@@ -45,7 +51,7 @@ class tiledmap:
     def save(self, file_path, file_name):
         """Saves the map into a file"""
         pass
-    def pygame_render_chunk(self, chunk_location):
+    def pygame_render_chunk(self, chunk_location, lighting=False):
         """Renders a section of a layer of the map"""
         pass
     def pygame_render_layer(self, layer_id, lighting=False):
@@ -58,10 +64,10 @@ class tiledmap:
                 location = (column*tilemap.tilesize, row*tilemap.tilesize)
                 surface.blit(texture, location)
         return surface
-    def pygame_render(self, lighting=False):
+    def pygame_render_map(self, lighting=False):
         """Renders the whole map"""
         surface = pygame.Surface((100,100))
-        for layer in range(self.get_layers()):
+        for layer in range(self.get_layer_count()):
             pygame_render(location, layer, lighting=lighting)
     def test_for_collusions(self, hitbox):
         """Tests for collusions if the hitbox is inside a wall."""
