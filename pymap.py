@@ -72,7 +72,7 @@ class tiledmap:
                 tile_id = self.get_tile_id((row, column), layer_id)
                 surface.blit(
                     tileset_class.pygame_render(tile_id), 
-                    (column*tilemap.tilesize, row*tilemap.tilesize)
+                    (column*tileset_class.get_width(), row*tileset_class.get_height())
                 )
         return surface
     def pygame_render_map(self, render_size=1, lighting=False):
@@ -81,9 +81,12 @@ class tiledmap:
             tileset_class.get_width()*self.get_columns()*render_size,
             tileset_class.get_height()*self.get_rows()*render_size
         ))
-        surface = pygame.Surface((100,100))
         for layer in range(self.get_layer_count()):
-            pygame_render(location, layer, render_size=1, lighting=lighting)
+            surface.blit(
+                pygame_render(location, layer, render_size=1, lighting=lighting),
+                (0,0)
+            )
+        return surface
     def test_for_collusions(self, hitbox):
         """Tests for collusions if the hitbox is inside a wall."""
         x1,x2,y1,y2 = hitbox
