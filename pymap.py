@@ -14,11 +14,11 @@ class tileset:
             int((self.tile_textures.get_size())[0]/self.tile_size[0]), 
             int((self.tile_textures.get_size())[1]/self.tile_size[1])
         )
-    def get_tile_id_pos(self, tileID):
-        if (self.get_tileset_size())[0]*(self.get_tileset_size()[1]) > tileID:
+    def get_tile_id_pos(self, tile_id):
+        if (self.get_tileset_size())[0]*(self.get_tileset_size()[1]) > tile_id:
             return (
-                int(tileID%(self.get_tileset_size())[0]), 
-                int(tileID/(self.get_tileset_size())[0])
+                int(tile_id%(self.get_tileset_size())[0]), 
+                int(tile_id/(self.get_tileset_size())[0])
             )
     def pygame_render(self, tile_id):
         """Returns an image of a tile"""
