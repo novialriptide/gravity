@@ -5,12 +5,7 @@ class tileset:
         self.tile_textures = pygame.image.load(tile_textures)
         self.tile_size = tile_size
         self.tiles_distance = tiles_distance
-    def get_textures_path(self):
-        return self.tile_textures
-    def get_tile_size(self):
-        return self.tile_size
-    def get_tileset_size(self):
-        return (
+        self.tileset_size = (
             int((self.tile_textures.get_size())[0]/self.tile_size[0]), 
             int((self.tile_textures.get_size())[1]/self.tile_size[1])
         )
@@ -46,12 +41,6 @@ class tiledmap:
         return self.tilemap["map_contents"][layer][row][column]
     def get_layer_count(self):
         return len(self.tilemap["map_contents"])
-    def get_map_size(self):
-        return (len(self.tilemap["map_contents"][0]), len(self.tilemap["map_contents"][0][0]))
-    def get_chunk_size(self):
-        return self.chunk_size
-    def get_tilemap(self):
-        return self.tilemap
     def save(self, file_path, file_name):
         """Saves the map into a file"""
         pass
