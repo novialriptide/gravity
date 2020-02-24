@@ -78,8 +78,8 @@ class tiledmap:
                     surface.blit(
                         self.tileset.pygame_render(tile_id, render_size=render_size), 
                         (
-                            column*self.tile_size[0], 
-                            row*self.tile_size[1]
+                            column*self.tile_size[0]*render_size, 
+                            row*self.tile_size[1]*render_size
                         ))
         except IndexError:
             return surface
