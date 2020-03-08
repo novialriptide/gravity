@@ -24,6 +24,7 @@ class tileset:
             )
 
     def set_render_size(self, render_size):
+        """Changes the size of the tile when rendering"""
         self.render_size = render_size
 
     def pygame_render(self, tile_id):
@@ -64,9 +65,9 @@ class tiledmap:
         """Load a pre-made map"""
         self.tilemap = map_contents
 
-    def modify_layer(self, location, tile_id, layer_id=0):
+    def modify_layer(self, position, tile_id, layer_id=0):
         """Changes a tile ID texture"""
-        row, column = location
+        row, column = position
         if layer_id != self.tilemap["collision_layer"]:
             self.tilemap["map_contents"][layer_id][row][column] = tile_id
         if layer_id == self.tilemap["collision_layer"]:
@@ -79,19 +80,20 @@ class tiledmap:
 ########################## OPTIONS METHODS #########################
 
     def set_render_size(self, render_size):
+        """Changes the size of the map when rendering"""
         self.render_size = render_size
 
 ############################ GET METHODS ###########################
 
-    def get_tile_id(self, location, layer):
-        """Returns a tile ID from the specified location"""
-        row, column = location
+    def get_tile_id(self, position, layer):
+        """Returns a tile ID from the specified position"""
+        row, column = position
         return self.tilemap["map_contents"][layer][row][column]
 
 ####################### GET COLLISION METHODS ######################
 
     def get_collision_rects(self, pos):
-        """Returns a list of pygame Rects from the collision layer from the specified location"""
+        """Returns a list of pygame Rects from the collision layer from the specified position"""
         collision_rects = []
         try:
             for row in range(self.map_size[0]+1):
@@ -110,15 +112,15 @@ class tiledmap:
             return collision_rects
     
     def get_map_border_rect(self, pos):
-        """Returns a pygame Rect for collision or camera from the specified location"""
+        """Returns a pygame Rect for collision or camera from the specified position"""
         return pygame.Rect(pos, (
             self.render_size*self.tile_size[0]*self.map_size[0],
             self.render_size*self.tile_size[1]*self.map_size[1]
         ))
 
-########################### RENDER METHODS ##########################
+######################### RENDERING METHODS ########################
 
-    def pygame_render_chunk(self, chunk_location, lighting=False):
+    def pygame_render_chunk(self, chunk_position, lighting=False):
         """Renders a chunk of a layer of the map"""
         surface = pygame.Surface((
             self.tile_size[0]*self.chunk_size[0]*self.render_size,
@@ -156,3 +158,50 @@ class tiledmap:
                     (0,0)
                 )
         return surface
+
+class physics:
+    def get_map_rect_collision(self, rect, rects, movement):
+        rect.move((
+            rect.x+movement[0],
+            rect.y+movement[1]
+        ))
+        if rect.collidelist(rects):
+            return True
+
+class entity:
+    def __init__(self, position, size, texture=texture, render_size=1):
+        self.position = (position[0], position[1])
+        self.size = (size[0], size[1])
+        self.entity_data = {}
+        self.texture = texture
+        self.render_size = render_size
+
+        self.original_position = (position[0], position[1])
+
+    def reset_position(self):
+        """Sets the entity's position to a specific position"""
+        self.position = self.original_position
+
+    def move(self, vposition, obey_collisions=False):
+        """Moves the entity from its relative position"""
+        pass
+
+    def update(self, up="w", down="s", left="a", right="d"):
+        """User inputs for movement"""
+        pass
+
+    def set_position(self, position):
+        """Sets the entity's position to a specific position"""
+        pass
+
+    def set_render_size(self, render_size):
+        """Changes the size of the entity when rendering"""
+        self.render_size = render_size
+
+    def get_rect(self):
+        """Returns a pygame Rect for collision"""
+        pass
+
+    def pygame_render(self):
+        """Renders the entity's sprite"""
+        pass
