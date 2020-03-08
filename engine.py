@@ -88,22 +88,33 @@ class tiledmap:
         row, column = location
         return self.tilemap["map_contents"][layer][row][column]
 
-    def get_collision_rects(self):
-        """Returns a list of pygame Rects from the collision layer"""
+####################### GET COLLISION METHODS ######################
+
+    def get_collision_rects(self, pos):
+        """Returns a list of pygame Rects from the collision layer from the specified location"""
         collision_rects = []
         try:
             for row in range(self.map_size[0]+1):
                 for column in range(self.map_size[1]+1):
-                    new_rect = pygame.Rect(((
-                        column*self.tile_size[0]*self.render_size, 
-                        row*self.tile_size[1]*self.render_size
-                    ),(
-                        self.tile_size[0]*self.render_size, 
-                        self.tile_size[1]*self.render_size
-                    )))
-                    collision_rects.append(new_rect)
+                    tile_id = self.get_tile_id((row, column), self.tilemap["collision_layer"])
+                    if tile_id == 1:
+                        new_rect = pygame.Rect(((
+                            pos[0]*column*self.tile_size[0]*self.render_size, 
+                            pos[1]*row*self.tile_size[1]*self.render_size
+                        ),(
+                            self.tile_size[0]*self.render_size, 
+                            self.tile_size[1]*self.render_size
+                        )))
+                        collision_rects.append(new_rect)
         except IndexError:
             return collision_rects
+    
+    def get_map_border_rect(self, pos):
+        """Returns a pygame Rect for collision or camera from the specified location"""
+        return pygame.Rect(pos, (
+            self.render_size*self.tile_size[0]*self.map_size[0],
+            self.render_size*self.tile_size[1]*self.map_size[1]
+        ))
 
 ########################### RENDER METHODS ##########################
 
@@ -114,7 +125,7 @@ class tiledmap:
             self.tile_size[1]*self.chunk_size[1]*self.render_size
         ))
 
-    def pygame_render_layer(self, layer_id):
+    def pygame_render_layer(self, layer_id, lighting=False):
         """Renders a specific layer of the map"""
         surface = pygame.Surface((
             self.tile_size[0]*self.map_size[0]*self.render_size,
@@ -128,7 +139,7 @@ class tiledmap:
                         self.tileset.pygame_render(tile_id), (
                             column*self.tile_size[0]*self.render_size, 
                             row*self.tile_size[1]*self.render_size
-                        ))
+                    ))
         except IndexError:
             return surface
 
