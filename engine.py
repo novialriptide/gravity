@@ -28,7 +28,7 @@ class tileset:
         """Changes the size of the tile when rendering"""
         self.render_size = render_size
 
-    def pygame_render(self, tile_id):
+    def pygame_render(self, surface, position, tile_id):
         """Returns an image of a tile. tile_id can never be 0"""
         if tile_id != 0:
             tile_id = tile_id - 1
@@ -37,16 +37,13 @@ class tileset:
             tile.blit(self.textures, (0, 0), (
                 self.tile_size[0]*tile_pos[0], 
                 self.tile_size[1]*tile_pos[1],
-                self.tile_size[0], 
-                self.tile_size[1]
+                self.tile_size[0], self.tile_size[1]
             ))
             tile = pygame.transform.scale(tile, (
                 self.tile_size[0]*self.render_size, 
                 self.tile_size[1]*self.render_size
             ))
-            return tile
-        else:
-            return pygame.Surface(self.tile_size)
+            surface.blit(tile, position)
 
 class tiledmap:
     def __init__(self, map_size, tileset_class, position, render_size=1, chunk_size=(5,5)):
@@ -159,11 +156,10 @@ class tiledmap:
             for row in range(self.map_size[0]+1):
                 for column in range(self.map_size[1]+1):
                     tile_id = self.get_tile_id((row, column), layer_id)
-                    map_surface.blit(
-                        self.tileset.pygame_render(tile_id), (
-                            column*self.tile_size[0]*self.render_size, 
-                            row*self.tile_size[1]*self.render_size
-                    ))
+                    self.tileset.pygame_render(surface, (
+                        column*self.tile_size[0]*self.render_size, 
+                        row*self.tile_size[1]*self.render_size
+                    ), tile_id))
         except IndexError:
             surface.blit(map_surface, self.position)
 
