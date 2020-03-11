@@ -226,10 +226,15 @@ class entity:
 ######################### ANIMATION METHODS ########################
 
     def set_frame(self, frame):
+        """Sets the animation timeline"""
         self.frame = frame
 
     def set_animation(self, animation_id):
         pass
+    
+    def set_animation_data(self, payload):
+        """Stores the entity's sprite"""
+        self.entity_data["animation_sprites"] = payload
 
 ######################### RENDERING METHODS ########################
 
