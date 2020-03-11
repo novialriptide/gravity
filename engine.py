@@ -188,6 +188,7 @@ class entity:
         self.entity_data = {}
         self.texture = texture
         self.render_size = render_size
+        self.frame = 0
 
         self.original_position = (position[0], position[1])
 
@@ -218,12 +219,13 @@ class entity:
 
     def move(self, vposition, obey_collisions=False):
         """Moves the entity from its relative position"""
-        pass
+        vx, vy = vposition
+        self.position = (self.position[0]+vx, self.position[1]+vy)
 
 ######################### ANIMATION METHODS ########################
 
-    def set_frame(self):
-        pass
+    def set_frame(self, frame):
+        self.frame = frame
 
     def set_animation(self, animation_id):
         pass
