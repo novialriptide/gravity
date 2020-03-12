@@ -225,7 +225,7 @@ class entity:
         """Sets the animation timeline"""
         self.frame = frame
 
-    def set_animation(self, animation_id):
+    def play_animation(self, animation_id):
         pass
     
     def set_animation_data(self, payload):
