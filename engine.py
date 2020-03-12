@@ -104,8 +104,8 @@ class tiledmap:
                     tile_id = self.get_tile_id((row, column), self.tilemap["collision_layer"])
                     if tile_id == 1:
                         new_rect = pygame.Rect(((
-                            self.position[0]*column*self.tile_size[0]*self.render_size, 
-                            self.position[1]*row*self.tile_size[1]*self.render_size
+                            self.position[0]+column*self.tile_size[0]*self.render_size, 
+                            self.position[1]+row*self.tile_size[1]*self.render_size
                         ),(
                             self.tile_size[0]*self.render_size, 
                             self.tile_size[1]*self.render_size
@@ -125,6 +125,17 @@ class tiledmap:
             self.render_size*self.tile_size[0]*self.map_size[0],
             self.render_size*self.tile_size[1]*self.map_size[1]
         ))
+
+    def get_map_rect_collision(self, rect, movement):
+        vx, vy = movement
+        test_rect = rect.copy()
+        test_rect.move((
+            rect.x+vx,
+            rect.y+vy
+        ))
+        print(rect.x+vx,rect.y+vy)
+        self.generate_collision_rects()
+        return test_rect.collidelist(self.collision_rects)
 
 ######################## POSITIONING METHODS #######################
 
@@ -162,10 +173,10 @@ class tiledmap:
             for row in range(self.map_size[0]+1):
                 for column in range(self.map_size[1]+1):
                     tile_id = self.get_tile_id((row, column), layer_id)
-                    self.tileset.pygame_render(surface, (
+                    self.tileset.pygame_render(map_surface, (
                         column*self.tile_size[0]*self.render_size, 
                         row*self.tile_size[1]*self.render_size
-                    ), tile_id))
+                    ), tile_id)
         except IndexError:
             surface.blit(map_surface, self.position)
 
@@ -175,23 +186,18 @@ class tiledmap:
             if layer != self.tilemap["collision_layer"]:
                 self.pygame_render_layer(surface, layer)
 
-class physics:
-    def get_map_rect_collision(self, rect, tilemap_class, movement):
-        rect.move((
-            rect.x+movement[0],
-            rect.y+movement[1]
-        ))
-        if rect.collidelist(tilemap_class.get_collision_rects()):
-            return True
-
 class entity:
-    def __init__(self, position, size, texture=None, render_size=1):
-        self.position = (position[0], position[1])
-        self.size = (size[0], size[1])
+    def __init__(self, position, size, fps=3, map_class=None, render_size=1):
+        x, y = position
+        width, height = size
+        self.position = (x, y)
+        self.size = (width, height)
         self.entity_data = {}
-        self.texture = texture
         self.render_size = render_size
         self.frame = 0
+        self.fps = fps
+        self.map_class = map_class
+        self.current_texture = None
 
         self.original_position = (position[0], position[1])
 
@@ -223,7 +229,26 @@ class entity:
     def move(self, vposition, obey_collisions=False):
         """Moves the entity from its relative position"""
         vx, vy = vposition
-        self.position = (self.position[0]+vx, self.position[1]+vy)
+        if obey_collisions == False:
+            self.position = (self.position[0]+vx, self.position[1]+vy)
+        if obey_collisions == True:
+            if self.map_class.get_map_rect_collision(self.get_rect(), (vx, vy)):
+                self.position = (self.position[0]+vx, self.position[1]+vy)
+
+######################## PLACEHOLDER METHODS #######################
+
+    def force_texture_rect(self, color):
+        """Forces the texture of the entity to be a pygame Rect"""
+        texture = pygame.Surface((
+            self.size[0]*self.render_size,
+            self.size[1]*self.render_size
+        ))
+        pygame.draw.rect(texture, color, (
+            self.position[0], self.position[1], 
+            self.size[0]*self.render_size, 
+            self.size[1]*self.render_size
+        ))
+        self.current_texture = texture
 
 ######################### ANIMATION METHODS ########################
 
@@ -231,7 +256,10 @@ class entity:
         """Sets the animation timeline"""
         self.frame = frame
 
-    def play_animation(self, animation_id):
+    def set_fps(self, fps):
+        self.fps = fps
+
+    def play_animation(self, animation_name):
         pass
     
     def set_animation_data(self, payload):
@@ -242,4 +270,4 @@ class entity:
 
     def pygame_render(self, surface):
         """Renders the entity's sprite"""
-        pass
+        surface.blit(self.current_texture, self.position)
