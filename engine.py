@@ -97,24 +97,23 @@ class tiledmap:
 
     def generate_collision_rects(self):
         """Returns a list of pygame Rects from the collision layer from the specified position"""
-        if self.collision_rects == []:
-            collision_rects = []
-            try:
-                for row in range(self.map_size[0]+1):
-                    for column in range(self.map_size[1]+1):
-                        tile_id = self.get_tile_id((row, column), self.tilemap["collision_layer"])
-                        if tile_id == 1:
-                            new_rect = pygame.Rect(((
-                                self.position[0]*column*self.tile_size[0]*self.render_size, 
-                                self.position[1]*row*self.tile_size[1]*self.render_size
-                            ),(
-                                self.tile_size[0]*self.render_size, 
-                                self.tile_size[1]*self.render_size
-                            )))
-                            collision_rects.append(new_rect)
-            except IndexError:
-                self.collision_rects = collision_rects
-                return collision_rects
+        collision_rects = []
+        try:
+            for row in range(self.map_size[0]+1):
+                for column in range(self.map_size[1]+1):
+                    tile_id = self.get_tile_id((row, column), self.tilemap["collision_layer"])
+                    if tile_id == 1:
+                        new_rect = pygame.Rect(((
+                            self.position[0]*column*self.tile_size[0]*self.render_size, 
+                            self.position[1]*row*self.tile_size[1]*self.render_size
+                        ),(
+                            self.tile_size[0]*self.render_size, 
+                            self.tile_size[1]*self.render_size
+                        )))
+                        collision_rects.append(new_rect)
+        except IndexError:
+            self.collision_rects = collision_rects
+            return collision_rects
     
     def optimize_collision_rects(self):
         """Combines some Rects together in collision_rects to optimize frames per second"""
