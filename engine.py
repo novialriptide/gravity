@@ -170,12 +170,12 @@ class tiledmap:
                 self.pygame_render_layer(surface, layer)
 
 class physics:
-    def get_map_rect_collision(self, rect, rects, movement):
+    def get_map_rect_collision(self, rect, tilemap_class, movement):
         rect.move((
             rect.x+movement[0],
             rect.y+movement[1]
         ))
-        if rect.collidelist(rects):
+        if rect.collidelist(tilemap_class.get_collision_rects()):
             return True
 
 class entity:
