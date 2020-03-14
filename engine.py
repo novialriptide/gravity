@@ -1,9 +1,23 @@
 #######################################################
 #    GAME DEN ENGINE v1.0 (2020)                      #
-#    tileset, tiledmap, entity                        #
+#    text_formating, tileset, tiledmap, entity        #
 #    DEVELOPED BY: ANDREW HONG                        #
 #######################################################
+# NOTE :: classes that have more than 8 methods,      #
+#        they will be organized into categories       #
+#######################################################
 import pygame
+
+class text_formating:
+    def __init__(self, font, size, render_size=1):
+        self.font = font
+        self.size = size
+
+    def get_rect(self):
+        pass
+
+    def pygame_render(self, surface, position):
+        pass
 
 class tileset:
     def __init__(self, textures, tile_size, render_size=1, tiles_distance=0):
@@ -133,8 +147,6 @@ class tiledmap:
             rect.x+vx,
             rect.y+vy
         ))
-        print(rect.x+vx,rect.y+vy)
-        self.generate_collision_rects()
         return test_rect.collidelist(self.collision_rects)
 
 ######################## POSITIONING METHODS #######################
@@ -234,6 +246,8 @@ class entity:
         if obey_collisions == True:
             if self.map_class.get_map_rect_collision(self.get_rect(), (vx, vy)):
                 self.position = (self.position[0]+vx, self.position[1]+vy)
+            if self.map_class.get_map_rect_collision(self.get_rect(), (vx, vy)) == False:
+                self.position = (self.position[0]-vx, self.position[1]-vy)
 
 ######################## PLACEHOLDER METHODS #######################
 
