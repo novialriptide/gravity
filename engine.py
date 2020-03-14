@@ -10,16 +10,19 @@ import pygame
 import os
 
 class text_formating:
-    def __init__(self, text, size, color, font="default", render_size=1, centered=True):
+    def __init__(self, text, size, color, font="default", font_type="ttf", render_size=1):
         pygame.font.init()
         self.font = font
         self.size = size
         self.render_size = render_size
         self.centered = centered
         self.position = None
+        self.font_type = font_type
 
         if self.font == "default":
+            # planned to implement custom font in v2.0 with GameDen's format
             font_used = os.path.join("data", "Pixeled.ttf")
+            self.font_type = "ttf"
 
         self.formatting = pygame.font.SysFont(font_used, size*render_size)
         self.text_surface = self.formatting.render(text, False, color)
@@ -32,6 +35,7 @@ class text_formating:
         ))
     
     def pygame_render(self, surface, position):
+        """Renders a text with the formatting applied"""
         x, y = position
         self.position = (x, y)
         surface.blit(self.text_surface, (x, y))
@@ -60,7 +64,7 @@ class tileset:
         self.render_size = render_size
 
     def pygame_render(self, surface, position, tile_id):
-        """Returns an image of a tile. tile_id can never be 0"""
+        """Renders an image of a tile. tile_id can never be 0"""
         if tile_id != 0:
             tile_id = tile_id - 1
             tile = pygame.Surface(self.tile_size)
@@ -148,6 +152,7 @@ class tiledmap:
     
     def optimize_collision_rects(self):
         """Combines some Rects together in collision_rects to optimize frames per second"""
+        """Planned to implement in v1.1"""
         pass
     
     def get_map_border_rect(self):
@@ -283,19 +288,26 @@ class entity:
 
 ######################### ANIMATION METHODS ########################
 
-    def set_frame(self, frame):
-        """Sets the animation timeline"""
-        self.frame = frame
-
     def set_fps(self, fps):
+        """Frames between each sprite"""
         self.fps = fps
 
-    def play_animation(self, animation_name):
-        pass
+    def play_animation(self, animation_dict_name):
+        """Starts the animation"""
+        number_of_sprites = len(self.entity_data["animation_sprites"][animation_dict_name])
+        targeted_frames = []
+        max_frames = number_of_sprites*self.fps
+        for targeted_frame in range(number_of_sprites): # generates the targeted frames that are involved in the sprite
+            if isinstance(targeted_frame/self.fps, int):
+                targeted_frames.append(targeted_frame)
+        if self.frame == max_frames:
+            self.frame = 0
+        if self.frame in targeted_frames:
+            self.current_texture = targeted_frames.index(self.frame)
     
-    def set_animation_data(self, payload):
-        """Stores the entity's sprite"""
-        self.entity_data["animation_sprites"] = payload
+    def new_animation_data(self, name, data):
+        """Stores the entity's sprite information. Inside the data variable should be a list of the sprite images in order"""
+        self.entity_data["animation_sprites"][str(name)] = data
 
 ######################### RENDERING METHODS ########################
 
