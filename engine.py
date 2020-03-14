@@ -1,7 +1,6 @@
 #######################################################
 #    GAME DEN ENGINE v1.0 (2020)                      #
 #    text_formating, tileset, tiledmap, entity        #
-#    DEVELOPED BY: ANDREW HONG                        #
 #######################################################
 # NOTE :: classes that have more than 8 methods,      #
 #      :: they will be organized into categories      #
@@ -15,7 +14,6 @@ class text_formating:
         self.font = font
         self.size = size
         self.render_size = render_size
-        self.centered = centered
         self.position = None
         self.font_type = font_type
 
@@ -292,7 +290,7 @@ class entity:
         """Frames between each sprite"""
         self.fps = fps
 
-    def play_animation(self, animation_dict_name):
+    def play_animation(self, animation_dict_name): # UNTESTED
         """Starts the animation"""
         number_of_sprites = len(self.entity_data["animation_sprites"][animation_dict_name])
         targeted_frames = []
