@@ -4,20 +4,37 @@
 #    DEVELOPED BY: ANDREW HONG                        #
 #######################################################
 # NOTE :: classes that have more than 8 methods,      #
-#        they will be organized into categories       #
+#      :: they will be organized into categories      #
 #######################################################
 import pygame
+import os
 
 class text_formating:
-    def __init__(self, font, size, render_size=1):
+    def __init__(self, text, size, color, font="default", render_size=1, centered=True):
+        pygame.font.init()
         self.font = font
         self.size = size
+        self.render_size = render_size
+        self.centered = centered
+        self.position = None
+
+        if self.font == "default":
+            font_used = os.path.join("data", "Pixeled.ttf")
+
+        self.formatting = pygame.font.SysFont(font_used, size*render_size)
+        self.text_surface = self.formatting.render(text, False, color)
 
     def get_rect(self):
-        pass
-
+        """Returns a pygame Rect for collision"""
+        return pygame.Rect(self.position, (
+            self.formatting.get_width()*self.render_size,
+            self.formatting.get_height()*self.render_size
+        ))
+    
     def pygame_render(self, surface, position):
-        pass
+        x, y = position
+        self.position = (x, y)
+        surface.blit(self.text_surface, (x, y))
 
 class tileset:
     def __init__(self, textures, tile_size, render_size=1, tiles_distance=0):
