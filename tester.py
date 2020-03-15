@@ -10,7 +10,9 @@ render_size = 7
 
 tileset = engine.tileset(os.path.join("data", "tiles.png"), (5,5), render_size=render_size)
 
-tile_map = engine.tiledmap((3,4),tileset,(0,0), render_size=render_size)
+tiled_map_contents = engine.generate_tiledmap((4,3))
+
+tile_map = engine.tiledmap(tiled_map_contents,tileset,(0,0), render_size=render_size)
 tile_map.modify_layer((0,1),1, layer_id=0)
 tile_map.add_new_layer()
 tile_map.modify_layer((0,1),1, layer_id=1)

@@ -78,26 +78,31 @@ class tileset:
             ))
             surface.blit(tile, position)
 
+def generate_tiledmap(map_size):
+    width, height = map_size
+    tilemap = {
+        #map_contents[layer_number][row][column]
+        "map_contents": [[[0 for j in range(width)] for i in range(height)]],
+        "collision_layer": 0
+    }
+    return tilemap
+
 class tiledmap:
-    def __init__(self, map_size, tileset_class, position, render_size=1, chunk_size=(5,5)):
+    def __init__(self, tiledmap, tileset_class, position, render_size=1, chunk_size=(5,5)):
         self.tileset = tileset_class
         self.tile_size = tileset_class.tile_size
-        self.map_size = (map_size[1], map_size[0])
+        print(tiledmap)
+        self.tilemap = tiledmap
+        self.map_size = (
+            len(self.tilemap["map_contents"][0][0]), 
+            len(self.tilemap["map_contents"][0])
+        )
         self.chunk_size = chunk_size
         self.map_textures_path = tileset_class.textures
         self.render_size = render_size
         self.position = position
         self.original_position = position
         self.collision_rects = []
-        self.tilemap = {
-            #map_contents[layer_number][row][column]
-            "map_contents": [[[0 for j in range(self.map_size[0])] for i in range(self.map_size[1])]],
-            "collision_layer": 0
-        }
-
-    def load_map(self, map_contents):
-        """Load a pre-made map"""
-        self.tilemap = map_contents
 
 ########################## OPTIONS METHODS #########################
 
