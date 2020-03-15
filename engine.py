@@ -79,6 +79,7 @@ class tileset:
             surface.blit(tile,position)
 
 def generate_tiledmap(map_size):
+    """Creates a new empty multidimensional array in GameDen's formatting"""
     width,height = map_size
     tilemap = {
         #map_contents[layer_number][row][column]
