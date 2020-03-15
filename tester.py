@@ -21,6 +21,27 @@ player_speed = 0.05
 player.force_texture_rect((220,20,220))
 player_movement = [0,0]
 
+player.new_animation_data("forward", [
+    player.texture_color_rect((231,124,127)),
+    player.texture_color_rect((0,20,127)),
+    player.texture_color_rect((101,130,167)),
+])
+player.new_animation_data("backward", [
+    player.texture_color_rect((231,124,127)),
+    player.texture_color_rect((0,20,0)),
+    player.texture_color_rect((101,130,0)),
+])
+player.new_animation_data("left", [
+    player.texture_color_rect((231,124,0)),
+    player.texture_color_rect((0,20,127)),
+    player.texture_color_rect((0,130,167)),
+])
+player.new_animation_data("right", [
+    player.texture_color_rect((0,0,127)),
+    player.texture_color_rect((0,20,0)),
+    player.texture_color_rect((101,130,167)),
+])
+
 text1 = engine.text_formating("If everything seems to be working, everything is working.", 20, (255,255,255))
 
 running = True
@@ -30,6 +51,20 @@ while(running):
     player.pygame_render(screen)
     player.move(player_movement, obey_collisions=True)
     text1.pygame_render(screen, (0,300))
+
+    if player_movement[1] > 0:
+        player.play_animation("backward")
+        player.update_animation_tick()
+    if player_movement[1] < 0:
+        player.play_animation("forward")
+        player.update_animation_tick()
+    if player_movement[0] < 0:
+        player.play_animation("left")
+        player.update_animation_tick()
+    if player_movement[0] > 0:
+        player.play_animation("right")
+        player.update_animation_tick()
+
     pygame.display.flip()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -46,9 +81,13 @@ while(running):
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
                 player_movement[1] = 0
+                player.stop_animation()
             if event.key == pygame.K_s:
                 player_movement[1] = 0
+                player.stop_animation()
             if event.key == pygame.K_a:
                 player_movement[0] = 0
+                player.stop_animation()
             if event.key == pygame.K_d:
                 player_movement[0] = 0
+                player.stop_animation()

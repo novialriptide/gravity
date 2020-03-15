@@ -149,7 +149,7 @@ class tiledmap:
             return collision_rects
     
     def optimize_collision_rects(self):
-        """Combines some Rects together in collision_rects to optimize frames per second"""
+        """Combines some Rects together in collision_rects to optimize ticks per second"""
         """Planned to implement in v1.1"""
         pass
     
@@ -219,17 +219,18 @@ class tiledmap:
                 self.pygame_render_layer(surface, layer)
 
 class entity:
-    def __init__(self, position, size, fps=3, map_class=None, render_size=1):
+    def __init__(self, position, size, tps=300, map_class=None, render_size=1):
         x, y = position
         width, height = size
         self.position = (x, y)
         self.size = (width, height)
-        self.entity_data = {}
+        self.entity_data = {"animation_sprites": {}}
         self.render_size = render_size
-        self.frame = 0
-        self.fps = fps
+        self.tick = 0
+        self.tps = tps
         self.map_class = map_class
         self.current_texture = None
+        self.animation_status = False
 
         self.original_position = (position[0], position[1])
 
@@ -271,6 +272,19 @@ class entity:
 
 ######################## PLACEHOLDER METHODS #######################
 
+    def texture_color_rect(self, color):
+        """Returns a Rect of the entity in 1 color"""
+        texture = pygame.Surface((
+            self.size[0]*self.render_size,
+            self.size[1]*self.render_size
+        ))
+        pygame.draw.rect(texture, color, (
+            0, 0, 
+            self.size[0]*self.render_size, 
+            self.size[1]*self.render_size
+        ))
+        return texture
+
     def force_texture_rect(self, color):
         """Forces the texture of the entity to be a pygame Rect"""
         texture = pygame.Surface((
@@ -286,22 +300,23 @@ class entity:
 
 ######################### ANIMATION METHODS ########################
 
-    def set_fps(self, fps):
-        """Frames between each sprite"""
-        self.fps = fps
+    def set_tps(self, tps):
+        self.tps = tps
+
+    def update_animation_tick(self):
+        """Updates animation tick"""
+        self.tick += 1
 
     def play_animation(self, animation_dict_name): # UNTESTED
         """Starts the animation"""
         number_of_sprites = len(self.entity_data["animation_sprites"][animation_dict_name])
-        targeted_frames = []
-        max_frames = number_of_sprites*self.fps
-        for targeted_frame in range(number_of_sprites): # generates the targeted frames that are involved in the sprite
-            if isinstance(targeted_frame/self.fps, int):
-                targeted_frames.append(targeted_frame)
-        if self.frame == max_frames:
-            self.frame = 0
-        if self.frame in targeted_frames:
-            self.current_texture = targeted_frames.index(self.frame)
+        if self.tick == number_of_sprites*self.tps:
+            self.tick = 0
+        self.current_texture = self.entity_data["animation_sprites"][str(animation_dict_name)][self.tick//self.tps]
+    
+    def stop_animation(self):
+        """Stops the animation"""
+        self.tick = 0
     
     def new_animation_data(self, name, data):
         """Stores the entity's sprite information. Inside the data variable should be a list of the sprite images in order"""
