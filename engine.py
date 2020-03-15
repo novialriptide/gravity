@@ -188,7 +188,7 @@ class tiledmap:
 
 ######################### RENDERING METHODS ########################
 
-    def pygame_render_chunk(self, surface, chunk_position, lighting=False):
+    def pygame_render_chunk(self, surface, map_size, chunk_position, lighting=False):
         """Renders a chunk of a layer of the map"""
         map_surface = pygame.Surface((
             self.tile_size[0]*self.chunk_size[0]*self.render_size,

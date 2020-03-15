@@ -24,10 +24,10 @@ player_movement = [0,0]
 player.new_animation_data("forward", [
     player.texture_color_rect((231,124,127)),
     player.texture_color_rect((0,20,127)),
-    player.texture_color_rect((101,130,167)),
+    player.texture_color_rect((101,30,167)),
 ])
 player.new_animation_data("backward", [
-    player.texture_color_rect((231,124,127)),
+    player.texture_color_rect((231,104,127)),
     player.texture_color_rect((0,20,0)),
     player.texture_color_rect((101,130,0)),
 ])
