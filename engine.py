@@ -1,8 +1,8 @@
 #######################################################
-#    GAME DEN ENGINE v1.0 (2020)                      #
-#    text_formating,tileset,tiledmap,entity        #
+#    GAME DEN ENGINE v1.1 (2020)                      #
+#    text_formating,tileset,tiledmap,entity           #
 #######################################################
-# NOTE :: classes that have more than 8 methods,     #
+# NOTE :: classes that have more than 8 methods,      #
 #      :: they will be organized into categories      #
 #######################################################
 import pygame
@@ -238,6 +238,14 @@ class entity:
         self.current_texture = None
 
         self.original_position = (position[0],position[1])
+
+######################## ENTITY DATA METHODS #######################
+
+    def add_entity_data(self, data_name, data_contents):
+        self.entity_data[data_name] = data_contents
+    
+    def remove_entity_data(self, data_name):
+        del self.entity_data[data_name]
 
 ########################## OPTIONS METHODS #########################
 
