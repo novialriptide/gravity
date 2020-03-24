@@ -1,5 +1,5 @@
 #######################################################
-#    GAME DEN ENGINE v1.1 (2020)                      #
+#    GAME DEN ENGINE v1.3 (2020)                      #
 #    text_formating,tileset,tiledmap,entity           #
 #######################################################
 # NOTE :: classes that have more than 8 methods,      #
@@ -7,36 +7,61 @@
 #######################################################
 import pygame
 import os
+import json
+from copy import deepcopy
 
-class text_formating:
-    def __init__(self,text,size,color,font="default",font_type="ttf",render_size=1):
-        pygame.font.init()
-        self.font = font
-        self.size = size
-        self.render_size = render_size
-        self.position = None
-        self.font_type = font_type
+def generate_tiledmap(map_size):
+    """Creates a new empty multidimensional array in GameDen's formatting"""
+    width,height = map_size
+    tilemap = {
+        #map_contents[layer_number][row][column]
+        "map_contents": [[[0 for j in range(width)] for i in range(height)]],
+        "collision_layer": 0
+    }
+    return tilemap
 
-        if self.font == "default":
-            # planned to implement custom font in v2.0 with GameDen's format
-            font_used = os.path.join("data","Pixeled.ttf")
-            self.font_type = "ttf"
+def convert_tiledjson(path):
+    """Converts a tiled json map in GameDen's formatting"""
+    with open(path, 'r') as file:
+        loaded_json = json.load(file)
 
-        self.formatting = pygame.font.SysFont(font_used,size*render_size)
-        self.text_surface = self.formatting.render(text,False,color)
+    map_contents = []
+    for layer in range(len(loaded_json["layers"])):
+        json_contents = loaded_json["layers"][layer]["data"]
+        n = loaded_json["width"]
+        layer_contents = [json_contents[i * n:(i + 1) * n] for i in range((len(json_contents) + n - 1) // n )]
+        map_contents.append(layer_contents)
+    tilemap = {
+        #map_contents[layer_number][row][column]
+        "map_contents": map_contents,
+        "collision_layer": 0
+    }
+    return tilemap
 
-    def get_rect(self):
-        """Returns a pygame Rect for collision"""
-        return pygame.Rect(self.position,(
-            self.formatting.get_width()*self.render_size,
-            self.formatting.get_height()*self.render_size
-        ))
-    
-    def pygame_render(self,surface,position):
-        """Renders a text with the formatting applied"""
-        x,y = position
-        self.position = (x,y)
-        surface.blit(self.text_surface,(x,y))
+def generate_font(FontImage,FontSpacingMain,TileSize,TileSizeY,color):
+    """DaFluffyPotato's code"""
+    FontSpacing = deepcopy(FontSpacingMain)
+    FontOrder = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','.','-',',',':','+','\'','!','?','0','1','2','3','4','5','6','7','8','9','(',')','/','_','=','\\','[',']','*','"','<','>',';']
+    FontImage = pygame.image.load(FontImage).convert()
+    NewSurf = pygame.Surface((FontImage.get_width(),FontImage.get_height())).convert()
+    NewSurf.fill(color)
+    FontImage.set_colorkey((255,0,0))
+    NewSurf.blit(FontImage,(0,0))
+    FontImage = NewSurf.copy()
+    FontImage.set_colorkey((0,0,0))
+    num = 0
+    for char in FontOrder:
+        FontImage.set_clip(pygame.Rect(((TileSize+1)*num),0,TileSize,TileSizeY))
+        CharacterImage = FontImage.subsurface(FontImage.get_clip())
+        CharacterImage = CharacterImage.convert()
+        CharacterImage.set_colorkey((0,0,0))
+        try:
+            FontSpacing[char].append(CharacterImage)
+        except KeyError:
+            break
+        num += 1
+    FontSpacing['Height'] = TileSizeY
+    return FontSpacing
 
 class tileset:
     def __init__(self,textures,tile_size,render_size=1,tiles_distance=0):
@@ -78,21 +103,20 @@ class tileset:
             ))
             surface.blit(tile,position)
 
-def generate_tiledmap(map_size):
-    """Creates a new empty multidimensional array in GameDen's formatting"""
-    width,height = map_size
-    tilemap = {
-        #map_contents[layer_number][row][column]
-        "map_contents": [[[0 for j in range(width)] for i in range(height)]],
-        "collision_layer": 0
-    }
-    return tilemap
+    def pygame_render2(self, tile_id):
+        """Returns an image of a tile. tile_id can never be 0"""
+        tile = pygame.Surface(self.tile_size)
+        if tile_id != 0:
+            self.pygame_render(tile,(0,0),tile_id)
+            return tile
+        else:
+            return tile
+
 
 class tiledmap:
     def __init__(self,tiledmap,tileset_class,position,render_size=1,chunk_size=(5,5)):
         self.tileset = tileset_class
         self.tile_size = tileset_class.tile_size
-        print(tiledmap)
         self.tilemap = tiledmap
         self.map_size = (
             len(self.tilemap["map_contents"][0][0]),
@@ -110,6 +134,14 @@ class tiledmap:
     def set_render_size(self,render_size):
         """Changes the size of the map when rendering"""
         self.render_size = render_size
+
+######################## ENTITY DATA METHODS #######################
+
+    def add_map_data(self, data_name, data_contents):
+        self.tilemap[data_name] = data_contents
+    
+    def remove_map_data(self, data_name):
+        del self.tilemap[data_name]
 
 ########################### LAYER METHODS ##########################
 
@@ -131,6 +163,13 @@ class tiledmap:
         """Returns a tile ID from the specified position"""
         row,column = position
         return self.tilemap["map_contents"][layer][row][column]
+
+    def get_tile_id2(self,position,layer):
+        """Returns a tile ID from the specified position in pixels"""
+        x,y = position
+        x = int(x/(self.tile_size*self.render_size))
+        y = int(y/(self.tile_size*self.render_size))
+        return self.tilemap["map_contents"][layer][x][y]
 
 ####################### GET/COLLISION METHODS ######################
 
@@ -156,7 +195,7 @@ class tiledmap:
     
     def optimize_collision_rects(self):
         """Combines some Rects together in collision_rects to optimize ticks per second"""
-        """Planned to implement in v1.1"""
+        """Planned to implement in v2.0"""
         pass
     
     def get_map_border_rect(self):
@@ -207,16 +246,16 @@ class tiledmap:
             self.tile_size[0]*self.map_size[0]*self.render_size,
             self.tile_size[1]*self.map_size[1]*self.render_size
         ))
-        try:
-            for row in range(self.map_size[0]+1):
-                for column in range(self.map_size[1]+1):
-                    tile_id = self.get_tile_id((row,column),layer_id)
-                    self.tileset.pygame_render(map_surface,(
-                        column*self.tile_size[0]*self.render_size,
-                        row*self.tile_size[1]*self.render_size
-                    ),tile_id)
-        except IndexError:
-            surface.blit(map_surface,self.position)
+        for row in range(self.map_size[0]):
+            for column in range(self.map_size[1]):
+                print(row, column)
+                tile_id = self.get_tile_id((row,column),layer_id)
+                self.tileset.pygame_render(map_surface,(
+                    column*self.tile_size[0]*self.render_size,
+                    row*self.tile_size[1]*self.render_size
+                ),tile_id)
+        print("render")
+        surface.blit(map_surface,self.position)
 
     def pygame_render_map(self,surface,lighting=False):
         """Renders the whole map"""
@@ -238,8 +277,6 @@ class entity:
         self.current_texture = None
 
         self.original_position = (position[0],position[1])
-
-######################## ENTITY DATA METHODS #######################
 
     def add_entity_data(self, data_name, data_contents):
         self.entity_data[data_name] = data_contents
@@ -320,7 +357,7 @@ class entity:
         """Updates animation tick"""
         self.tick += 1
 
-    def play_animation(self,animation_dict_name): # UNTESTED
+    def play_animation(self,animation_dict_name):
         """Starts the animation"""
         number_of_sprites = len(self.entity_data["animation_sprites"][animation_dict_name])
         if self.tick == number_of_sprites*self.tps:
@@ -329,10 +366,6 @@ class entity:
     
     def stop_animation(self):
         """Stops the animation"""
-        self.tick = 0
-
-    def reset_animation(self):
-        """Stops the animation and resets it to it's original sprite"""
         self.tick = 0
     
     def new_animation_data(self,name,data):
