@@ -39,14 +39,11 @@ tiled_map_contents = {
     'collision_layer': 0
 }
 tile_map = engine.tiledmap(tiled_map_contents,tileset,(0,0),render_size=render_size)
-"""tile_map.modify_layer((0,1),1,layer_id=0)
-tile_map.add_new_layer()
-tile_map.modify_layer((0,1),1,layer_id=1)"""
 tile_map.generate_collision_rects()
 print(tile_map.tilemap)
 
 player = engine.entity((0,0),(5,5),map_class=tile_map,render_size=render_size)
-player_speed = 0.05
+player_speed = 1
 player_movement = [0,0]
 
 player.new_animation_data("idle",[
@@ -74,8 +71,6 @@ player.new_animation_data("right",[
     player.texture_color_rect((101,130,167)),
 ])
 
-#text1 = engine.text_formating("If everything seems to be working,everything is working.",20,(255,255,255))
-
 running = True
 while(running):
     if player_movement == [0,0]:
@@ -98,7 +93,6 @@ while(running):
     tile_map.pygame_render_map(screen,(0,0))
     player.pygame_render(screen)
     player.move(player_movement,obey_collisions=True)
-    #text1.pygame_render(screen,(0,300))
 
     pygame.display.flip()
     for event in pygame.event.get():

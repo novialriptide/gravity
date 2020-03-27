@@ -1,9 +1,9 @@
 #######################################################
-#    GAME DEN ENGINE v1.3 (2020)                      #
-#    text_formating,tileset,tiledmap,entity           #
+#    GAME DEN ENGINE v1.4.4 (2020)                    #
+#    text_formating,tileset,tiledmap,entity,          #
+#    pygame_timer                                     #
 #######################################################
-# NOTE :: classes that have more than 8 methods,      #
-#      :: they will be organized into categories      #
+#    DEVELOPED BY ANDREW HONG                         #
 #######################################################
 import pygame
 import os
@@ -62,6 +62,30 @@ def generate_font(FontImage,FontSpacingMain,TileSize,TileSizeY,color):
         num += 1
     FontSpacing['Height'] = TileSizeY
     return FontSpacing
+
+class pygame_timer:
+    def __init__(self, time):
+        self.time = time
+        self.valid = True
+        self.started = False
+
+    def start(self):
+        if self.started == False:
+            self.origin_ticks = pygame.time.get_ticks()
+            self.started = True
+
+    def check_time(self):
+        """Returns a boolean if the timer has reached its targeted frame"""
+        current_ticks = pygame.time.get_ticks()
+        try:
+            if current_ticks - self.origin_ticks >= self.time and self.valid == True and self.started == True:
+                self.origin_ticks = current_ticks
+                self.valid = False
+                return True
+            else:
+                return False
+        except AttributeError:
+            pass
 
 class tileset:
     def __init__(self,textures,tile_size,render_size=1,tiles_distance=0):
@@ -176,29 +200,27 @@ class tiledmap:
     def generate_collision_rects(self):
         """Returns a list of pygame Rects from the collision layer from the specified position"""
         collision_rects = []
-        try:
-            for row in range(self.map_size[0]+1):
-                for column in range(self.map_size[1]+1):
-                    tile_id = self.get_tile_id((row,column),self.tilemap["collision_layer"])
-                    if tile_id == 1:
-                        new_rect = pygame.Rect(((
-                            self.position[0]+column*self.tile_size[0]*self.render_size,
-                            self.position[1]+row*self.tile_size[1]*self.render_size
-                        ),(
-                            self.tile_size[0]*self.render_size,
-                            self.tile_size[1]*self.render_size
-                        )))
-                        collision_rects.append(new_rect)
-        except IndexError:
-            self.collision_rects = collision_rects
-            return collision_rects
+        for row in range(self.map_size[0]):
+            for column in range(self.map_size[1]):
+                tile_id = self.get_tile_id((row,column),self.tilemap["collision_layer"])
+                if tile_id == 1:
+                    new_rect = pygame.Rect(((
+                        self.position[0]+column*self.tile_size[0]*self.render_size,
+                        self.position[1]+row*self.tile_size[1]*self.render_size
+                    ),(
+                        self.tile_size[0]*self.render_size,
+                        self.tile_size[1]*self.render_size
+                    )))
+                    collision_rects.append(new_rect)
+        self.collision_rects = collision_rects
+        return collision_rects
     
     def optimize_collision_rects(self):
         """Combines some Rects together in collision_rects to optimize ticks per second"""
         """Planned to implement in v2.0"""
         pass
     
-    def get_map_border_rect(self):
+    def get_map_rect(self):
         """Returns a pygame Rect for collision or camera from the specified position"""
         return pygame.Rect(self.position,(
             self.render_size*self.tile_size[0]*self.map_size[0],
@@ -219,6 +241,14 @@ class tiledmap:
     def reset_position(self):
         """Sets the map's position to a specific position"""
         self.position = self.original_position
+
+    def center(self, surface_size):
+        surface_width, surface_height = surface_size
+        map_size = self.get_map_rect().size
+        self.set_position((
+            surface_width/2-map_size[0]/2,
+            surface_height/2-map_size[1]/2
+        ))
 
     def set_position(self,position):
         """Sets the map's position to a specific position"""
@@ -248,13 +278,11 @@ class tiledmap:
         ))
         for row in range(self.map_size[0]):
             for column in range(self.map_size[1]):
-                print(row, column)
                 tile_id = self.get_tile_id((row,column),layer_id)
                 self.tileset.pygame_render(map_surface,(
                     column*self.tile_size[0]*self.render_size,
                     row*self.tile_size[1]*self.render_size
                 ),tile_id)
-        print("render")
         surface.blit(map_surface,self.position)
 
     def pygame_render_map(self,surface,lighting=False):
@@ -290,6 +318,9 @@ class entity:
         """Changes the size of the entity when rendering"""
         self.render_size = render_size
 
+    def set_map_class(self,map_class):
+        self.map_class = map_class
+
 ####################### GET COLLISION METHODS ######################
 
     def get_rect(self):
@@ -306,20 +337,35 @@ class entity:
         self.position = self.original_position
 
     def set_position(self,position):
-        """Sets the entity's position to a specific position"""
+        """Sets the entity's position to a specific position in pixels"""
         self.position = position
+    
+    def set_position2(self,position,tilemap):
+        """Sets the entity's position to a specific position"""
+        self.position = (
+            tilemap.position[0]+tilemap.tile_size[0]*tilemap.render_size*position[0],
+            tilemap.position[1]+tilemap.tile_size[1]*tilemap.render_size*position[1]
+        )
+
+    def center(self, surface_size):
+        surface_width, surface_height = surface_size
+        map_size = self.get_map_rect().size
+        self.set_position((
+            surface_width/2-map_size[0]/2,
+            surface_height/2-map_size[1]/2
+        ))
 
     def move(self,vposition,obey_collisions=False):
-        """Moves the entity from its relative position"""
+        """Moves the entity from its relative position in pixels"""
         vx,vy = vposition
         if obey_collisions == False:
             self.position = (self.position[0]+vx,self.position[1]+vy)
         if obey_collisions == True:
-            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)):
+            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) == -1:
                 self.position = (self.position[0]+vx,self.position[1]+vy)
-            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) == False:
+            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) >= 0:
                 self.position = (self.position[0]-vx,self.position[1]-vy)
-
+        
 ######################## PLACEHOLDER METHODS #######################
 
     def texture_color_rect(self,color):
