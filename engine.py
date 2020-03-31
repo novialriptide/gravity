@@ -1,7 +1,7 @@
 #######################################################
-#    GAME DEN ENGINE v1.4.4 (2020)                    #
+#    GAME DEN ENGINE v1.4.5 (2020)                    #
 #    text_formating,tileset,tiledmap,entity,          #
-#    pygame_timer                                     #
+#    pygame_timer,text_formating                      #
 #######################################################
 #    DEVELOPED BY ANDREW HONG                         #
 #######################################################
@@ -38,30 +38,34 @@ def convert_tiledjson(path):
     }
     return tilemap
 
-def generate_font(FontImage,FontSpacingMain,TileSize,TileSizeY,color):
-    """DaFluffyPotato's code"""
-    FontSpacing = deepcopy(FontSpacingMain)
-    FontOrder = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','.','-',',',':','+','\'','!','?','0','1','2','3','4','5','6','7','8','9','(',')','/','_','=','\\','[',']','*','"','<','>',';']
-    FontImage = pygame.image.load(FontImage).convert()
-    NewSurf = pygame.Surface((FontImage.get_width(),FontImage.get_height())).convert()
-    NewSurf.fill(color)
-    FontImage.set_colorkey((255,0,0))
-    NewSurf.blit(FontImage,(0,0))
-    FontImage = NewSurf.copy()
-    FontImage.set_colorkey((0,0,0))
-    num = 0
-    for char in FontOrder:
-        FontImage.set_clip(pygame.Rect(((TileSize+1)*num),0,TileSize,TileSizeY))
-        CharacterImage = FontImage.subsurface(FontImage.get_clip())
-        CharacterImage = CharacterImage.convert()
-        CharacterImage.set_colorkey((0,0,0))
-        try:
-            FontSpacing[char].append(CharacterImage)
-        except KeyError:
-            break
-        num += 1
-    FontSpacing['Height'] = TileSizeY
-    return FontSpacing
+class text_formating:
+    def __init__(self,size,font="default",font_type="ttf",render_size=1):
+        pygame.font.init()
+        self.font = font
+        self.size = size
+        self.render_size = render_size
+        self.font_type = font_type
+
+        if self.font == "default":
+            # planned to implement custom font in v2.0 with GameDen's format
+            font_used = os.path.join("textures","pixel.ttf")
+            self.font_type = "ttf"
+
+        self.formatting = pygame.font.SysFont(font_used,size*render_size)
+
+    def get_rect(self):
+        """Returns a pygame Rect for collision"""
+        return pygame.Rect(self.position,(
+            self.formatting.get_width()*self.render_size,
+            self.formatting.get_height()*self.render_size
+        ))
+    
+    def pygame_render(self,surface,text,position,color=(255,255,255)):
+        """Renders a text with the formatting applied"""
+        x,y = position
+        position = (x,y)
+        text_surface = self.formatting.render(text,True,color)
+        surface.blit(text_surface,(x,y))
 
 class pygame_timer:
     def __init__(self, time):
@@ -78,7 +82,7 @@ class pygame_timer:
         """Returns a boolean if the timer has reached its targeted frame"""
         current_ticks = pygame.time.get_ticks()
         try:
-            if current_ticks - self.origin_ticks >= self.time and self.valid == True and self.started == True:
+            if current_ticks - self.origin_ticks >= self.time and self.valid and self.started:
                 self.origin_ticks = current_ticks
                 self.valid = False
                 return True
