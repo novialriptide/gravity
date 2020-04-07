@@ -1,14 +1,13 @@
 #######################################################
-#    GAME DEN ENGINE v1.4.5 (2020)                    #
+#    GAME DEN ENGINE v1.4.9 (2020)                    #
 #    text_formating,tileset,tiledmap,entity,          #
-#    pygame_timer,text_formating                      #
+#    pygame_timer                                     #
 #######################################################
 #    DEVELOPED BY ANDREW HONG                         #
 #######################################################
 import pygame
 import os
 import json
-from copy import deepcopy
 
 def generate_tiledmap(map_size):
     """Creates a new empty multidimensional array in GameDen's formatting"""
@@ -69,22 +68,25 @@ class text_formating:
 
 class pygame_timer:
     def __init__(self, time):
+        """Creates a timer"""
         self.time = time
         self.valid = True
         self.started = False
 
     def start(self):
+        """Starts the timer."""
         if self.started == False:
             self.origin_ticks = pygame.time.get_ticks()
             self.started = True
 
-    def check_time(self):
+    def check_time(self, make_invalid=False):
         """Returns a boolean if the timer has reached its targeted frame"""
         current_ticks = pygame.time.get_ticks()
         try:
             if current_ticks - self.origin_ticks >= self.time and self.valid and self.started:
                 self.origin_ticks = current_ticks
-                self.valid = False
+                if make_invalid == True:
+                    self.valid = False
                 return True
             else:
                 return False
@@ -123,7 +125,8 @@ class tileset:
             tile.blit(self.textures,(0,0),(
                 self.tile_size[0]*tile_pos[0],
                 self.tile_size[1]*tile_pos[1],
-                self.tile_size[0],self.tile_size[1]
+                self.tile_size[0],
+                self.tile_size[1]
             ))
             tile = pygame.transform.scale(tile,(
                 self.tile_size[0]*self.render_size,
@@ -137,9 +140,7 @@ class tileset:
         if tile_id != 0:
             self.pygame_render(tile,(0,0),tile_id)
             return tile
-        else:
-            return tile
-
+        else: return tile
 
 class tiledmap:
     def __init__(self,tiledmap,tileset_class,position,render_size=1,chunk_size=(5,5)):
@@ -147,8 +148,8 @@ class tiledmap:
         self.tile_size = tileset_class.tile_size
         self.tilemap = tiledmap
         self.map_size = (
-            len(self.tilemap["map_contents"][0][0]),
-            len(self.tilemap["map_contents"][0])
+            len(self.tilemap["map_contents"][0]), #height          # I HAVE NO IDEA HOW TO FIX THIS
+            len(self.tilemap["map_contents"][0][0]) #width
         )
         self.chunk_size = chunk_size
         self.map_textures_path = tileset_class.textures
@@ -187,17 +188,28 @@ class tiledmap:
 
 ############################ GET METHODS ###########################
 
+    def get_position(self,position):
+        """Returns a tuple to reveal the a tilemap position"""
+        x,y = position
+        x = int((x-self.position[0])/(self.tile_size[0]*self.render_size))
+        y = int((y-self.position[1])/(self.tile_size[1]*self.render_size))
+        return (x, y)
+
     def get_tile_id(self,position,layer):
         """Returns a tile ID from the specified position"""
         row,column = position
-        return self.tilemap["map_contents"][layer][row][column]
+        try:
+            return self.tilemap["map_contents"][layer][row][column]
+        except TypeError:
+            raise Exception(f"tile location doesn't exist ({row}, {column})")
 
     def get_tile_id2(self,position,layer):
         """Returns a tile ID from the specified position in pixels"""
-        x,y = position
-        x = int(x/(self.tile_size*self.render_size))
-        y = int(y/(self.tile_size*self.render_size))
-        return self.tilemap["map_contents"][layer][x][y]
+        x, y = self.get_position(position)
+        try:
+            return self.tilemap["map_contents"][layer][x][y]
+        except TypeError:
+            raise Exception(f"tile location doesn't exist ({x}, {y})")
 
 ####################### GET/COLLISION METHODS ######################
 
@@ -225,7 +237,7 @@ class tiledmap:
         pass
     
     def get_map_rect(self):
-        """Returns a pygame Rect for collision or camera from the specified position"""
+        """Returns a pygame Rect for collision or camera"""
         return pygame.Rect(self.position,(
             self.render_size*self.tile_size[0]*self.map_size[0],
             self.render_size*self.tile_size[1]*self.map_size[1]
@@ -247,11 +259,30 @@ class tiledmap:
         self.position = self.original_position
 
     def center(self, surface_size):
+        """Centers the position"""
         surface_width, surface_height = surface_size
         map_size = self.get_map_rect().size
         self.set_position((
-            surface_width/2-map_size[0]/2,
-            surface_height/2-map_size[1]/2
+            surface_width/2-map_size[1]/2,
+            surface_height/2-map_size[0]/2
+        ))
+
+    def center_x(self, surface_size):
+        """Centers the position only by the x position"""
+        surface_width, surface_height = surface_size
+        map_size = self.get_map_rect().size
+        self.set_position((
+            surface_width/2-map_size[1]/2,
+            self.position[1]
+        ))
+
+    def center_y(self, surface_size):
+        """Centers the position only by the y position"""
+        surface_width, surface_height = surface_size
+        map_size = self.get_map_rect().size
+        self.set_position((
+            self.position[0],
+            surface_height/2-map_size[0]/2
         ))
 
     def set_position(self,position):
@@ -270,16 +301,17 @@ class tiledmap:
     def pygame_render_chunk(self,surface,map_size,chunk_position,lighting=False):
         """Renders a chunk of a layer of the map"""
         map_surface = pygame.Surface((
-            self.tile_size[0]*self.chunk_size[0]*self.render_size,
-            self.tile_size[1]*self.chunk_size[1]*self.render_size
+            self.tile_size[1]*self.chunk_size[1]*self.render_size,
+            self.tile_size[0]*self.chunk_size[0]*self.render_size
         ))
 
     def pygame_render_layer(self,surface,layer_id,lighting=False):
         """Renders a specific layer of the map"""
         map_surface = pygame.Surface((
-            self.tile_size[0]*self.map_size[0]*self.render_size,
-            self.tile_size[1]*self.map_size[1]*self.render_size
+            self.tile_size[1]*self.map_size[1]*self.render_size,
+            self.tile_size[0]*self.map_size[0]*self.render_size
         ))
+
         for row in range(self.map_size[0]):
             for column in range(self.map_size[1]):
                 tile_id = self.get_tile_id((row,column),layer_id)
@@ -290,7 +322,7 @@ class tiledmap:
         surface.blit(map_surface,self.position)
 
     def pygame_render_map(self,surface,lighting=False):
-        """Renders the whole map"""
+        """Renders the entire map"""
         for layer in range(len(self.tilemap["map_contents"])):
             if layer != self.tilemap["collision_layer"]:
                 self.pygame_render_layer(surface,layer)
@@ -333,6 +365,18 @@ class entity:
             self.size[0]*self.render_size,
             self.size[1]*self.render_size
         ))
+
+# predict the velocity movement by only 1 pixel, but it also predicts the velocity movement to see if there will be an invisible wall.
+
+    def predict_x_movement(self, vx):
+        if self.map_class.get_map_rect_collision(self.get_rect(),(vx,0)) != -1:
+            return True
+        else: return False
+
+    def predict_y_movement(self, vy):
+        if self.map_class.get_map_rect_collision(self.get_rect(),(0,vy)) != -1:
+            return True
+        else: return False
         
 ######################## POSITIONING METHODS #######################
 
@@ -352,6 +396,7 @@ class entity:
         )
 
     def center(self, surface_size):
+        """Centers the position"""
         surface_width, surface_height = surface_size
         map_size = self.get_map_rect().size
         self.set_position((
@@ -367,9 +412,15 @@ class entity:
         if obey_collisions == True:
             if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) == -1:
                 self.position = (self.position[0]+vx,self.position[1]+vy)
-            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) >= 0:
-                self.position = (self.position[0]-vx,self.position[1]-vy)
-        
+            if self.predict_x_movement(vx) and vx > 0: # collision detected
+                self.position = (self.position[0]-vx,self.position[1])
+            if self.predict_x_movement(vx) and vx < 0: # collision detected
+                self.position = (self.position[0]-vx,self.position[1]) 
+            if self.predict_y_movement(vy) and vy > 0: # collision detected
+                self.position = (self.position[0],self.position[1]-vy)
+            if self.predict_y_movement(vy) and vy < 0: # collision detected
+                self.position = (self.position[0],self.position[1]-vy)
+                
 ######################## PLACEHOLDER METHODS #######################
 
     def texture_color_rect(self,color):
@@ -401,6 +452,7 @@ class entity:
 ######################### ANIMATION METHODS ########################
 
     def set_tps(self,tps):
+        """Sets the tps (ticks per second)"""
         self.tps = tps
 
     def update_animation_tick(self):
