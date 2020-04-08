@@ -1,5 +1,5 @@
 #######################################################
-#    GAME DEN ENGINE v1.4.9 (2020)                    #
+#    GAME DEN ENGINE v1.5.0 (2020)                    #
 #    text_formating,tileset,tiledmap,entity,          #
 #    pygame_timer                                     #
 #######################################################
@@ -329,9 +329,7 @@ class tiledmap:
 
 class entity:
     def __init__(self,position,size,tps=300,map_class=None,render_size=1):
-        x,y = position
         width,height = size
-        self.position = (x,y)
         self.size = (width,height)
         self.entity_data = {"animation_sprites": {}}
         self.render_size = render_size
@@ -339,6 +337,11 @@ class entity:
         self.tps = tps
         self.map_class = map_class
         self.current_texture = None
+        self.rect = pygame.Rect(position,(
+            self.size[0]*self.render_size,
+            self.size[1]*self.render_size
+        ))
+        self.position = [self.rect.x, self.rect.y]
 
         self.original_position = (position[0],position[1])
 
@@ -358,68 +361,72 @@ class entity:
         self.map_class = map_class
 
 ####################### GET COLLISION METHODS ######################
-
-    def get_rect(self):
-        """Returns a pygame Rect for collision"""
-        return pygame.Rect(self.position,(
-            self.size[0]*self.render_size,
-            self.size[1]*self.render_size
-        ))
-
-# predict the velocity movement by only 1 pixel, but it also predicts the velocity movement to see if there will be an invisible wall.
-
-    def predict_x_movement(self, vx):
-        if self.map_class.get_map_rect_collision(self.get_rect(),(vx,0)) != -1:
-            return True
-        else: return False
-
-    def predict_y_movement(self, vy):
-        if self.map_class.get_map_rect_collision(self.get_rect(),(0,vy)) != -1:
-            return True
-        else: return False
+    
+    def collision_test(self,rect,tiles):
+        hit_list = []
+        for tile in tiles:
+            if rect.colliderect(tile):
+                hit_list.append(tile)
+        return hit_list
         
 ######################## POSITIONING METHODS #######################
 
     def reset_position(self):
         """Sets the entity's position to a specific position"""
-        self.position = self.original_position
+        self.rect.move_ip(original_position[0], original_position[1])
 
     def set_position(self,position):
         """Sets the entity's position to a specific position in pixels"""
-        self.position = position
+        self.rect.move_ip(position[0], position[1])
     
     def set_position2(self,position,tilemap):
         """Sets the entity's position to a specific position"""
-        self.position = (
+        self.rect.move_ip(
             tilemap.position[0]+tilemap.tile_size[0]*tilemap.render_size*position[0],
             tilemap.position[1]+tilemap.tile_size[1]*tilemap.render_size*position[1]
         )
 
-    def center(self, surface_size):
+    def center(self,surface_size):
         """Centers the position"""
         surface_width, surface_height = surface_size
         map_size = self.get_map_rect().size
-        self.set_position((
+        self.rect.move_ip(
             surface_width/2-map_size[0]/2,
             surface_height/2-map_size[1]/2
-        ))
+        )
 
-    def move(self,vposition,obey_collisions=False):
-        """Moves the entity from its relative position in pixels"""
-        vx,vy = vposition
-        if obey_collisions == False:
-            self.position = (self.position[0]+vx,self.position[1]+vy)
-        if obey_collisions == True:
-            if self.map_class.get_map_rect_collision(self.get_rect(),(vx,vy)) == -1:
-                self.position = (self.position[0]+vx,self.position[1]+vy)
-            if self.predict_x_movement(vx) and vx > 0: # collision detected
-                self.position = (self.position[0]-vx,self.position[1])
-            if self.predict_x_movement(vx) and vx < 0: # collision detected
-                self.position = (self.position[0]-vx,self.position[1]) 
-            if self.predict_y_movement(vy) and vy > 0: # collision detected
-                self.position = (self.position[0],self.position[1]-vy)
-            if self.predict_y_movement(vy) and vy < 0: # collision detected
-                self.position = (self.position[0],self.position[1]-vy)
+    def move(self,movement,obey_collisions=True):
+        """REWRITTEN IN V1.5.0! Moves the object relative from it's position"""
+        player_rect = self.rect
+        collisions = self.map_class.collision_rects
+        collision_types = {
+            "top": False,
+            "bottom": False,
+            "right": False,
+            "left": False
+        }
+
+        self.rect.x += movement[0]
+        if obey_collisions:
+            hit_list = self.collision_test(player_rect,collisions)
+            for tile in hit_list:
+                if movement[0] > 0:
+                    player_rect.right = tile.left
+                    collision_types["right"] = True
+                elif movement[0] < 0:
+                    player_rect.left = tile.right
+                    collision_types["left"] = True
+
+        self.rect.y += movement[1]
+        if obey_collisions:
+            hit_list = self.collision_test(player_rect,collisions)
+            for tile in hit_list:
+                if movement[1] > 0:
+                    player_rect.bottom = tile.top
+                    collision_types["bottom"] = True
+                elif movement[1] < 0:
+                    player_rect.top = tile.bottom
+                    collision_types["top"] = True
                 
 ######################## PLACEHOLDER METHODS #######################
 
@@ -464,8 +471,11 @@ class entity:
         number_of_sprites = len(self.entity_data["animation_sprites"][animation_dict_name])
         if self.tick == number_of_sprites*self.tps:
             self.tick = 0
-        self.current_texture = self.entity_data["animation_sprites"][str(animation_dict_name)][self.tick//self.tps]
-    
+        try:
+            self.current_texture = self.entity_data["animation_sprites"][str(animation_dict_name)][self.tick//self.tps]
+        except IndexError:
+            raise Exception(f"sprite does not exist ({self.tick//self.tps})")
+
     def stop_animation(self):
         """Stops the animation"""
         self.tick = 0
@@ -478,4 +488,4 @@ class entity:
 
     def pygame_render(self,surface):
         """Renders the entity's sprite"""
-        surface.blit(self.current_texture,self.position)
+        surface.blit(self.current_texture,(self.rect.x, self.rect.y))
