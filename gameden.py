@@ -27,13 +27,6 @@ def _calculate_segment_intersection(x1,y1,x2,y2,x3,y3,x4,y4):
     else:
         raise Exception(exception_msg)
 
-def _get_equation(x1,y1,x2,y2):
-    y = y2-y1
-    x = x2-x1
-    slope = y/x
-    y_intercept = y1 - slope*x1
-    return slope, y_intercept
-
 def convert_rect_to_wall(rect):
     return (rect.left, rect.top, rect.right, rect.top), (rect.left, rect.bottom, rect.right, rect.bottom), (rect.left, rect.top, rect.left, rect.bottom), (rect.right, rect.top, rect.right, rect.bottom)
 
@@ -78,15 +71,15 @@ def convert_tiledjson(path):
     with open(path, 'r') as file:
         loaded_json = json.load(file)
 
-    map_contents = []
+    contents = []
     for layer in range(len(loaded_json["layers"])):
         json_contents = loaded_json["layers"][layer]["data"]
         n = loaded_json["width"]
         layer_contents = [json_contents[i * n:(i + 1) * n] for i in range((len(json_contents) + n - 1) // n )]
-        map_contents.append(layer_contents)
+        contents.append(layer_contents)
     tilemap = {
-        #map_contents[layer_number][row][column]
-        "map_contents": map_contents,
+        #contents[layer_number][row][column]
+        "contents": contents,
         "collision_layer": 0,
         "invisible_layers": [0]
     }
@@ -210,8 +203,8 @@ class tiledmap:
         self.tile_size = tileset_class.tile_size
         self.tilemap = tiledmap
         self.map_size = (
-            len(self.tilemap["map_contents"][0]), #height          # I HAVE NO IDEA HOW TO FIX THIS
-            len(self.tilemap["map_contents"][0][0]) #width
+            len(self.tilemap["contents"][0]), #height          # I HAVE NO IDEA HOW TO FIX THIS
+            len(self.tilemap["contents"][0][0]) #width
         )
         self.chunk_size = chunk_size
         self.map_textures_path = tileset_class.textures
@@ -231,13 +224,13 @@ class tiledmap:
         """Changes a tile ID texture"""
         row,column = position
         if layer_id != self.tilemap["collision_layer"]:
-            self.tilemap["map_contents"][layer_id][row][column] = tile_id
+            self.tilemap["contents"][layer_id][row][column] = tile_id
         if layer_id == self.tilemap["collision_layer"]:
-            self.tilemap["map_contents"][layer_id][row][column] = 1
+            self.tilemap["contents"][layer_id][row][column] = 1
 
     def add_new_layer(self):
         """Adds a new layer with an empty multidimensional array"""
-        self.tilemap["map_contents"].append([[0 for j in range(self.map_size[0])] for i in range(self.map_size[1])])
+        self.tilemap["contents"].append([[0 for j in range(self.map_size[0])] for i in range(self.map_size[1])])
 
     def get_position(self,position):
         """Returns a tuple to reveal the tilemap position"""
@@ -249,14 +242,14 @@ class tiledmap:
     def get_tile_id(self,position,layer):
         """Returns a tile ID from the specified position"""
         row,column = position
-        try: return self.tilemap["map_contents"][layer][row][column]
+        try: return self.tilemap["contents"][layer][row][column]
         except TypeError:
             raise Exception(f"tile location doesn't exist ({row}, {column})")
 
     def get_tile_id2(self,position,layer):
         """Returns a tile ID from the specified position in pixels"""
         x, y = self.get_position(position)
-        try: return self.tilemap["map_contents"][layer][x][y]
+        try: return self.tilemap["contents"][layer][x][y]
         except TypeError:
             raise Exception(f"tile location doesn't exist ({x}, {y})")
 
@@ -321,7 +314,7 @@ class tiledmap:
 
     def pygame_render_map(self,surface):
         """Renders the entire map"""
-        for layer in range(len(self.tilemap["map_contents"])):
+        for layer in range(len(self.tilemap["contents"])):
             if layer not in self.tilemap["invisible_layers"]:
                 self.pygame_render_layer(surface,layer)
     
@@ -334,7 +327,7 @@ class tiledmap:
         surface = surface.convert_alpha()
         old_position = self.position
         self.position = (0,0)
-        for layer in range(len(self.tilemap["map_contents"])):
+        for layer in range(len(self.tilemap["contents"])):
             if layer not in self.tilemap["invisible_layers"]:
                 self.pygame_render_layer(surface,layer)
         self.position = old_position
