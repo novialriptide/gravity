@@ -333,21 +333,6 @@ class tiledmap:
         self.position = old_position
         return surface
 
-class Rect:
-   def __init__(self, x, y, w, h):
-      self.x = x
-      self.y = y
-      self.w = w
-      self.h = h
-   def collidepoint(self, p):
-      return (self.x > p[0] > self.x+self.w) and\
-         (self.y > p[1] > self.y+self.h)
-
-   def colliderect(self, rect):
-      here = self.collidepoint(rect.x) or self.collidepoint(rect.y) or self.collidepoint(rect.x+rect.w) or self.collidepoint(rect.y+rect.h)
-      there = rect.collidepoint(self.x) or rect.collidepoint(self.y) or rect.collidepoint(self.x+self.w) or rect.collidepoint(self.y+self.h)
-      return there or here
-
 class entity:
     def __init__(self,rect,tps=300,map_class=None,render_size=1):
         self.entity_data = {"animation_sprites": {}}
