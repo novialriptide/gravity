@@ -35,12 +35,7 @@ player_speed = 5
 moving_right = False
 moving_left = False
 
-valid_gravity_settings = [
-    ["bottom", "top"],
-    ["top", "bottom"],
-    ["left", "right"],
-    ["right", "left"]
-]
+valid_gravity_settings = ["bottom", "top", "right", "left"]
 current_gravity_setting = valid_gravity_settings[0]
 
 while(True):
@@ -66,6 +61,8 @@ while(True):
                 moving_right = False
             if event.key == pygame.K_LEFT:
                 moving_left = False
+    if clock.get_fps() != 0: delta_time = 1/clock.get_fps()
+    else: delta_time = 0
 
     player_movement = [0,0]
     if moving_right == True:

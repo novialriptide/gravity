@@ -258,6 +258,25 @@ class tilemap:
         
         return map_surface
 
+class physics_box:
+    def __init__(self, collisions: list, entities: list, floor: str):
+        self._valid_floors = ["top", "right", "bottom", "left"]
+        
+        self.collisions = collisions
+        self.entities = entities
+        if floor in self._valid_floors: self.floor = floor
+        else: raise Exception("invalid floor type")
+    
+    @property
+    def ceiling(self):
+        floor_id = 0
+        for floor in self._valid_floors:
+            if floor == self._valid_floors: break
+            floor_id += 1
+        if floor_id >= len(self._valid_floors): floor_id -= 4
+        ceiling_id = floor_id
+        return self._valid_floors[ceiling_id]
+
 class entity:
     def __init__(self, rect, tps, tilemap=None):
         self.rect = rect
@@ -300,10 +319,6 @@ class entity:
         self.rect.y = m_y+t_height*tilemap.render_size*y
         self.position_float = [self.rect.x, self.rect.y]
     
-    def jump(self, jump_height, fall_speed):
-        if self.is_floating_tick < jump_height:
-            self.vertical_momentum = -fall_speed
-
     def move(self, 
         movement: tuple, 
         collisions: list, 
@@ -323,17 +338,18 @@ class entity:
             "left": False
         }
         valid_directions = collision_types.keys()
+        floor, ceiling = direction
 
         # physics: deals with the entity if it's in the air
-        if direction[0] in valid_directions and direction[1] in valid_directions:
+        if floor in valid_directions and ceiling in valid_directions:
             if direction == valid_gravity_settings[0]: movement[1] += self.vertical_momentum
             if direction == valid_gravity_settings[1]: movement[1] -= self.vertical_momentum
             if direction == valid_gravity_settings[2]: movement[0] -= self.vertical_momentum
             if direction == valid_gravity_settings[3]: movement[0] += self.vertical_momentum
             self.vertical_momentum += self.jump_speed
-            if self.vertical_momentum > self.weight:
-                self.vertical_momentum = self.weight
-        elif direction[0] == None and direction[1] == None: pass
+            if self.vertical_momentum > self.weight: self.vertical_momentum = self.weight
+            
+        elif floor == None and ceiling == None: pass
         else: raise Exception(f"invalid direction(s) \"{direction}\"")
 
         if movement_accurate:
@@ -364,19 +380,15 @@ class entity:
                 self.rect.top = tile.bottom
                 collision_types["top"] = True
         
-        # physics: returns the state to normal
-        if collision_types[direction[0]] == True:
+        if collision_types[floor] == True:
             self.is_floating_tick = 0
             self.vertical_momentum = 0
         else: self.is_floating_tick += 1
-        if collision_types[direction[1]] == True:
+
+        if collision_types[ceiling] == True:
             self.is_floating_tick = 0
             self.vertical_momentum = 0
 
         return collision_types
 
-class physics:
-    def __init__(self): pass
-    def calculate_projectile_motion(self, position: tuple, init_speed: float, tick: float):
-        x, y = position
-        return -16*(tick^2)+init_speed*tick+y
+    
