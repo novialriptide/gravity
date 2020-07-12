@@ -73,7 +73,7 @@ while(True):
 
     screen.fill((115, 115, 115))
     screen.blit(d_tilemap_image, map_pos)
-    player.move(player_movement, collision_rects, direction=current_gravity_setting)
+    player.move(player_movement, collision_rects, floor=current_gravity_setting)
     pygame.draw.rect(screen, (100,100,100), player.rect)
 
     w_width, w_height = SCREEN_SIZE

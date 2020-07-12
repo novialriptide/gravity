@@ -258,24 +258,15 @@ class tilemap:
         
         return map_surface
 
-class physics_box:
-    def __init__(self, collisions: list, entities: list, floor: str):
-        self._valid_floors = ["top", "right", "bottom", "left"]
-        
-        self.collisions = collisions
-        self.entities = entities
-        if floor in self._valid_floors: self.floor = floor
-        else: raise Exception("invalid floor type")
-    
-    @property
-    def ceiling(self):
-        floor_id = 0
-        for floor in self._valid_floors:
-            if floor == self._valid_floors: break
-            floor_id += 1
-        if floor_id >= len(self._valid_floors): floor_id -= 4
-        ceiling_id = floor_id
-        return self._valid_floors[ceiling_id]
+def get_ceiling(floor):
+    valid_floors = ["top", "right", "bottom", "left"]
+    floor_id = 0
+    for floor in valid_floors:
+        if floor == valid_floors: break
+        floor_id += 1
+    if floor_id >= len(valid_floors): floor_id -= 4
+    ceiling_id = floor_id
+    return valid_floors[ceiling_id]
 
 class entity:
     def __init__(self, rect, tps, tilemap=None):
@@ -322,15 +313,10 @@ class entity:
     def move(self, 
         movement: tuple, 
         collisions: list, 
-        direction=["bottom", "top"],
+        floor="bottom",
         movement_accurate: bool = False
     ) -> dict:
-        valid_gravity_settings = [
-            ["bottom", "top"],
-            ["top", "bottom"],
-            ["left", "right"],
-            ["right", "left"]
-        ]
+        valid_gravity_settings = ["bottom", "top", "right", "left"]
         collision_types = {
             "top": False,
             "right": False,
@@ -338,20 +324,21 @@ class entity:
             "left": False
         }
         valid_directions = collision_types.keys()
-        floor, ceiling = direction
+        ceiling = get_ceiling(floor)
 
         # physics: deals with the entity if it's in the air
         if floor in valid_directions and ceiling in valid_directions:
-            if direction == valid_gravity_settings[0]: movement[1] += self.vertical_momentum
-            if direction == valid_gravity_settings[1]: movement[1] -= self.vertical_momentum
-            if direction == valid_gravity_settings[2]: movement[0] -= self.vertical_momentum
-            if direction == valid_gravity_settings[3]: movement[0] += self.vertical_momentum
+            if floor == valid_gravity_settings[0]: movement[1] += self.vertical_momentum
+            if floor == valid_gravity_settings[1]: movement[1] -= self.vertical_momentum
+            if floor == valid_gravity_settings[2]: movement[0] -= self.vertical_momentum
+            if floor == valid_gravity_settings[3]: movement[0] += self.vertical_momentum
             self.vertical_momentum += self.jump_speed
             if self.vertical_momentum > self.weight: self.vertical_momentum = self.weight
             
         elif floor == None and ceiling == None: pass
-        else: raise Exception(f"invalid direction(s) \"{direction}\"")
+        else: raise Exception(f"invalid direction(s) \"{floor}\"")
 
+        # collision
         if movement_accurate:
             self.position_float[0] += movement[0]
             self.rect.x += movement[0] + (self.position_float[0] - self.rect.x)
@@ -380,6 +367,7 @@ class entity:
                 self.rect.top = tile.bottom
                 collision_types["top"] = True
         
+        # physics again
         if collision_types[floor] == True:
             self.is_floating_tick = 0
             self.vertical_momentum = 0
