@@ -269,7 +269,7 @@ def get_ceiling(floor):
     return valid_floors[ceiling_id]
 
 class entity:
-    def __init__(self, rect, tps, tilemap=None):
+    def __init__(self, rect, tps, tilemap=None, physics_payload=None):
         self.rect = rect
         self.tps = tps
         self.tilemap = tilemap
@@ -280,10 +280,14 @@ class entity:
         self.image_offset_position = [0,0]
 
         # physics
-        self.vertical_momentum = 0
-        self.is_floating_tick = 0
-        self.weight = 3
-        self.jump_speed = 0.2
+        """ PHYSICS PAYLOAD
+        payload = {
+            "collisions": [],
+            "gravity": []
+        }
+        """
+        self.physics = physics_payload
+        self.momentum = [0,0]
 
         # misc
         self.position_float = [float(self.rect.x), float(self.rect.y)]
@@ -311,71 +315,59 @@ class entity:
         self.position_float = [self.rect.x, self.rect.y]
     
     def move(self, 
-        movement: tuple, 
-        collisions: list, 
-        floor="bottom",
+        velocity: tuple,
         movement_accurate: bool = False
     ) -> dict:
-        valid_gravity_settings = ["bottom", "top", "right", "left"]
         collision_types = {
             "top": False,
             "right": False,
             "bottom": False,
             "left": False
         }
-        valid_directions = collision_types.keys()
-        ceiling = get_ceiling(floor)
+        
+        # physics
+        vx, vy = velocity
+        mx, my = self.momentum
+        if self.physics != None:
+            p_data = self.physics
 
-        # physics: deals with the entity if it's in the air
-        if floor in valid_directions and ceiling in valid_directions:
-            if floor == valid_gravity_settings[0]: movement[1] += self.vertical_momentum
-            if floor == valid_gravity_settings[1]: movement[1] -= self.vertical_momentum
-            if floor == valid_gravity_settings[2]: movement[0] -= self.vertical_momentum
-            if floor == valid_gravity_settings[3]: movement[0] += self.vertical_momentum
-            self.vertical_momentum += self.jump_speed
-            if self.vertical_momentum > self.weight: self.vertical_momentum = self.weight
-            
-        elif floor == None and ceiling == None: pass
-        else: raise Exception(f"invalid direction(s) \"{floor}\"")
+            g = p_data["gravity"]
+            gravity = numpy.array([g[0], g[1]])
+            velocity_array = numpy.array([vx, vy])
 
+            vx, vy = (velocity_array + gravity).tolist()
+            collisions = p_data["collisions"]
+        
         # collision
         if movement_accurate:
-            self.position_float[0] += movement[0]
-            self.rect.x += movement[0] + (self.position_float[0] - self.rect.x)
-        else: self.rect.x += movement[0]
+            self.position_float[0] += vx
+            self.rect.x += vx + (self.position_float[0] - self.rect.x)
+        else: self.rect.x += vx
 
-        hit_list = self.collision_test(self.rect,collisions)
-        for tile in hit_list:
-            if movement[0] > 0:
-                self.rect.right = tile.left
-                collision_types["right"] = True
-            elif movement[0] < 0:
-                self.rect.left = tile.right
-                collision_types["left"] = True
+        if self.physics != None:
+            hit_list = self.collision_test(self.rect,collisions)
+            for tile in hit_list:
+                if vx > 0:
+                    self.rect.right = tile.left
+                    collision_types["right"] = True
+                elif vx < 0:
+                    self.rect.left = tile.right
+                    collision_types["left"] = True
 
         if movement_accurate:
-            self.position_float[1] += movement[1]
-            self.rect.y += movement[1] + (self.position_float[1] - self.rect.y)
-        else: self.rect.y += movement[1]
+            self.position_float[1] += vy
+            self.rect.y += vy + (self.position_float[1] - self.rect.y)
+        else: self.rect.y += vy
 
-        hit_list = self.collision_test(self.rect,collisions)
-        for tile in hit_list:
-            if movement[1] > 0:
-                self.rect.bottom = tile.top
-                collision_types["bottom"] = True
-            elif movement[1] < 0:
-                self.rect.top = tile.bottom
-                collision_types["top"] = True
-        
-        # physics again
-        if collision_types[floor] == True:
-            self.is_floating_tick = 0
-            self.vertical_momentum = 0
-        else: self.is_floating_tick += 1
-
-        if collision_types[ceiling] == True:
-            self.is_floating_tick = 0
-            self.vertical_momentum = 0
+        if self.physics != None:
+            hit_list = self.collision_test(self.rect,collisions)
+            for tile in hit_list:
+                if vy > 0:
+                    self.rect.bottom = tile.top
+                    collision_types["bottom"] = True
+                elif vy < 0:
+                    self.rect.top = tile.bottom
+                    collision_types["top"] = True
 
         return collision_types
 

@@ -30,50 +30,35 @@ player_rect = pygame.Rect(start_pos[0], start_pos[1], 20, 20)
 player = gamedenRE.entity(player_rect, 300, d_tilemap)
 player.weight = 5
 player.jump_speed = 0.2
-player_speed = 5
 
-moving_right = False
-moving_left = False
-
-valid_gravity_settings = ["bottom", "top", "right", "left"]
-current_gravity_setting = valid_gravity_settings[0]
+# gravity
+gravity_speed = 60
+gravity_setting = [0, gravity_speed]
 
 while(True):
+    if clock.get_fps() != 0: dt = clock.get_fps()/1000
+    else: dt = 0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
               sys.exit()
         if event.type == pygame.KEYDOWN:
-            """
-            if event.key == pygame.K_RIGHT:
-                moving_right = True
-            if event.key == pygame.K_LEFT:
-                moving_left = True
-            if event.key == pygame.K_UP:
-                if player.is_floating_tick < 6:
-                    player.vertical_momentum = -10
-            """
-            if event.key == pygame.K_s: current_gravity_setting = valid_gravity_settings[0]
-            if event.key == pygame.K_w: current_gravity_setting = valid_gravity_settings[1]
-            if event.key == pygame.K_a: current_gravity_setting = valid_gravity_settings[2]
-            if event.key == pygame.K_d: current_gravity_setting = valid_gravity_settings[3]
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_RIGHT:
-                moving_right = False
-            if event.key == pygame.K_LEFT:
-                moving_left = False
-    if clock.get_fps() != 0: delta_time = 1/clock.get_fps()
-    else: delta_time = 0
+            if event.key == pygame.K_s: gravity_setting = [0, dt*gravity_speed]
+            if event.key == pygame.K_w: gravity_setting = [0, dt*-gravity_speed]
+            if event.key == pygame.K_a: gravity_setting = [dt*-gravity_speed, 0]
+            if event.key == pygame.K_d: gravity_setting = [dt*gravity_speed, 0]
 
     player_movement = [0,0]
-    if moving_right == True:
-        player_movement[0] += player_speed
-    if moving_left == True:
-        player_movement[0] -= player_speed
     collision_rects = d_tilemap.get_collision_rects(map_pos, 0, render_size=RENDER_SIZE)
+    payload = {
+        "collisions": collision_rects,
+        "gravity": gravity_setting
+    }
+    player.physics = payload
 
     screen.fill((115, 115, 115))
     screen.blit(d_tilemap_image, map_pos)
-    player.move(player_movement, collision_rects, floor=current_gravity_setting)
+    player.move(player_movement)
     pygame.draw.rect(screen, (100,100,100), player.rect)
 
     w_width, w_height = SCREEN_SIZE
