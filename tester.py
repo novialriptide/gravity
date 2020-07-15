@@ -28,7 +28,7 @@ t_width, t_height = d_tilemap.tile_size
 start_pos = (t_width*2*RENDER_SIZE, t_height*1*RENDER_SIZE)
 player_rect = pygame.Rect(start_pos[0], start_pos[1], 20, 20)
 player = gamedenRE.entity(player_rect, 300, d_tilemap)
-player.weight = 5
+player.mass = 10
 player.jump_speed = 0.2
 
 # gravity
@@ -66,4 +66,5 @@ while(True):
     screen.blit(fps_text, (int(w_width - w_width/75 - fps_text.get_rect().width),int(w_height/75)))
 
     pygame.display.flip()
+    print(player.momentum, player.mass)
     clock.tick(60)

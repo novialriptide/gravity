@@ -93,13 +93,13 @@ def grayscale(img):
 class button:
     def __init__(self, position: tuple, image_path, render_size: int = 1):
         x, y = position
-        self.position = [x,y]
+        self.x, self.y = [x,y]
         self.image = pygame.image.load(image_path)
         self.render_size = render_size
 
     @property
     def rect(self):
-        x, y = self.position
+        x, y = self.x, self.y
         return pygame.Rect(x, y,
             self.image.get_width()*self.render_size, 
             self.image.get_height()*self.render_size
@@ -288,9 +288,11 @@ class entity:
         """
         self.physics = physics_payload
         self.momentum = [0,0]
+        self.mass = 1
 
-        # misc
-        self.position_float = [float(self.rect.x), float(self.rect.y)]
+        # positioning
+        self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
 
     def collision_test(self, rect, tiles: list) -> list:
         hit_list = []
@@ -303,7 +305,7 @@ class entity:
         x, y = position
         self.rect.x = x
         self.rect.y = y
-        self.position_float = position
+        self.x, self.y = position
     
     def set_position2(self, position: tuple, tilemap, tilemap_render_size: int = 1):
         x, y = position
@@ -312,12 +314,9 @@ class entity:
 
         self.rect.x = m_x+t_width*tilemap.render_size*x
         self.rect.y = m_y+t_height*tilemap.render_size*y
-        self.position_float = [self.rect.x, self.rect.y]
+        self.x, self.y = [self.rect.x, self.rect.y]
     
-    def move(self, 
-        velocity: tuple,
-        movement_accurate: bool = False
-    ) -> dict:
+    def move(self, velocity: tuple) -> dict:
         collision_types = {
             "top": False,
             "right": False,
@@ -325,49 +324,50 @@ class entity:
             "left": False
         }
         
-        # physics
+        # physics: momentum & gravity
         vx, vy = velocity
         mx, my = self.momentum
         if self.physics != None:
             p_data = self.physics
-
-            g = p_data["gravity"]
-            gravity = numpy.array([g[0], g[1]])
-            velocity_array = numpy.array([vx, vy])
-
-            vx, vy = (velocity_array + gravity).tolist()
+            gx, gy = p_data["gravity"]
             collisions = p_data["collisions"]
-        
-        # collision
-        if movement_accurate:
-            self.position_float[0] += vx
-            self.rect.x += vx + (self.position_float[0] - self.rect.x)
-        else: self.rect.x += vx
 
+            gravity_array = numpy.array([gx, gy])
+            momentum_array = numpy.array([vx*self.mass, vy*self.mass])
+            mx, my = (momentum_array + gravity_array).tolist()
+        else:
+            mx, my = vx*self.mass, vy*self.mass
+        self.momentum = mx, my
+
+        # physics: collision detection
+        self.x += mx
+        self.rect.x = int(self.x)
+    
         if self.physics != None:
+            markers = [False,False,False,False]
             hit_list = self.collision_test(self.rect,collisions)
             for tile in hit_list:
-                if vx > 0:
+                if mx > 0:
                     self.rect.right = tile.left
                     collision_types["right"] = True
-                elif vx < 0:
+                elif mx < 0:
                     self.rect.left = tile.right
                     collision_types["left"] = True
+                self.x = float(self.rect.x)
 
-        if movement_accurate:
-            self.position_float[1] += vy
-            self.rect.y += vy + (self.position_float[1] - self.rect.y)
-        else: self.rect.y += vy
-
+        self.y += my
+        self.rect.y = int(self.y)
+    
         if self.physics != None:
             hit_list = self.collision_test(self.rect,collisions)
             for tile in hit_list:
-                if vy > 0:
+                if my > 0:
                     self.rect.bottom = tile.top
                     collision_types["bottom"] = True
-                elif vy < 0:
+                elif my < 0:
                     self.rect.top = tile.bottom
                     collision_types["top"] = True
+                self.y = float(self.rect.y)
 
         return collision_types
 
