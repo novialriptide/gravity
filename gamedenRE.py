@@ -289,6 +289,7 @@ class entity:
         self.physics = physics_payload
         self.momentum = [0,0]
         self.mass = 1
+        self.velocity = [0,0]
 
         # positioning
         self.x = float(self.rect.x)
@@ -326,6 +327,7 @@ class entity:
         
         # physics: momentum & gravity
         vx, vy = velocity
+        self.velocity = [vx, vy]
         mx, my = self.momentum
         if self.physics != None:
             p_data = self.physics
