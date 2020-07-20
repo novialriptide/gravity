@@ -270,7 +270,14 @@ def get_ceiling(floor: str):
     return valid_floors[ceiling_id]
 
 class entity:
-    def __init__(self, rect, tps, tilemap=None, physics_payload=None):
+    def __init__(self, position, size, tps, tilemap=None):
+        x, y = position
+        w, h = size
+        self.tps = tps
+        self.tilemap = tilemap
+
+class entity:
+    def __init__(self, rect, tps, tilemap=None):
         self.rect = rect
         self.tps = tps
         self.tilemap = tilemap
@@ -283,13 +290,6 @@ class entity:
         # positioning
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
-
-    def pymunk_poly(self, render_size: int):
-        b = pymunk.Body()
-        b.position = self.x, self.y
-        w, h = int(self.rect.width*render_size), int(self.rect.height*render_size)
-        vs = [(-w/2,-h/2), (w/2,-h/2), (w/2,h/2), (-w/2,h/2)]
-        return pymunk.Poly(b, vs)
 
     def collision_test(self, rect, tiles: list) -> list:
         hit_list = []
