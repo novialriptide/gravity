@@ -3,11 +3,13 @@ import pygame
 import time
 
 SCREEN_SIZE = [500,500]
+friction = 1
+elasticity = 0
 SEGMENTS = [
-    {"elasticity": 0.9, "friction": 1, "point1": [0,0], "point2": [500,0], "radius": 1},
-    {"elasticity": 0.9, "friction": 1, "point1": [0,500], "point2": [500,500], "radius": 1},
-    {"elasticity": 0.9, "friction": 1, "point1": [0,0], "point2": [0,500], "radius": 1},
-    {"elasticity": 0.9, "friction": 1, "point1": [500,0], "point2": [500,500], "radius": 1}
+    {"elasticity": elasticity, "friction": friction, "point1": [0,0], "point2": [500,0], "radius": 1},
+    {"elasticity": elasticity, "friction": friction, "point1": [0,500], "point2": [500,500], "radius": 1},
+    {"elasticity": elasticity, "friction": friction, "point1": [0,0], "point2": [0,500], "radius": 1},
+    {"elasticity": elasticity, "friction": friction, "point1": [500,0], "point2": [500,500], "radius": 1}
 ]
 
 # pygame setup
@@ -29,8 +31,8 @@ for segment in SEGMENTS:
     space.add(s)
 
 # character
-body = pymunk.Body(1, 1666)
-body.position = 1,100
+body = pymunk.Body(100, 1666)
+body.position = 100,100
 w, h = 10, 10
 poly = pymunk.Poly(body, [(-w/2,-h/2), (w/2,-h/2), (w/2,h/2), (-w/2,h/2)])
 
@@ -47,7 +49,7 @@ while(True):
             if event.key == pygame.K_d: space.gravity = gravity_speed,0
     screen.fill((0,0,0))
     for segment in SEGMENTS:
-        pygame.draw.line(screen, (255,255,255), segment["point1"], segment["point2"], width=segment["radius"]*5)
+        pygame.draw.line(screen, (255,255,255), segment["point1"], segment["point2"], width=segment["radius"])
     pygame.draw.rect(screen, (255,255,255), [
         body.position[0], body.position[1],
         w, h
