@@ -3,6 +3,7 @@ import os
 import json
 import numpy
 import math
+import pymunk
 
 def _calculate_segment_intersection(x1,y1,x2,y2,x3,y3,x4,y4):
     exception_msg = "two lines inputted are parallel or coincident"
@@ -258,7 +259,7 @@ class tilemap:
         
         return map_surface
 
-def get_ceiling(floor):
+def get_ceiling(floor: str):
     valid_floors = ["top", "right", "bottom", "left"]
     floor_id = 0
     for floor in valid_floors:
@@ -279,21 +280,16 @@ class entity:
         self.current_texture = None
         self.image_offset_position = [0,0]
 
-        # physics
-        """ PHYSICS PAYLOAD
-        payload = {
-            "collisions": [],
-            "gravity": []
-        }
-        """
-        self.physics = physics_payload
-        self.momentum = [0,0]
-        self.mass = 1
-        self.velocity = [0,0]
-
         # positioning
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
+
+    def pymunk_poly(self, render_size: int):
+        b = pymunk.Body()
+        b.position = self.x, self.y
+        w, h = int(self.rect.width*render_size), int(self.rect.height*render_size)
+        vs = [(-w/2,-h/2), (w/2,-h/2), (w/2,h/2), (-w/2,h/2)]
+        return pymunk.Poly(b, vs)
 
     def collision_test(self, rect, tiles: list) -> list:
         hit_list = []
@@ -324,53 +320,36 @@ class entity:
             "bottom": False,
             "left": False
         }
+        mx, my = velocity
         
-        # physics: momentum & gravity
-        vx, vy = velocity
-        self.velocity = [vx, vy]
-        mx, my = self.momentum
-        if self.physics != None:
-            p_data = self.physics
-            gx, gy = p_data["gravity"]
-            collisions = p_data["collisions"]
-
-            gravity_array = numpy.array([gx, gy])
-            momentum_array = numpy.array([vx*self.mass, vy*self.mass])
-            mx, my = (momentum_array + gravity_array).tolist()
-        else:
-            mx, my = vx*self.mass, vy*self.mass
-        self.momentum = mx, my
-
         # physics: collision detection
         self.x += mx
         self.rect.x = int(self.x)
     
-        if self.physics != None:
-            markers = [False,False,False,False]
-            hit_list = self.collision_test(self.rect,collisions)
-            for tile in hit_list:
-                if mx > 0:
-                    self.rect.right = tile.left
-                    collision_types["right"] = True
-                elif mx < 0:
-                    self.rect.left = tile.right
-                    collision_types["left"] = True
-                self.x = float(self.rect.x)
+        markers = [False,False,False,False]
+        hit_list = self.collision_test(self.rect,self.collisions)
+        for tile in hit_list:
+            if mx > 0:
+                self.rect.right = tile.left
+                collision_types["right"] = True
+            elif mx < 0:
+                self.rect.left = tile.right
+                collision_types["left"] = True
+            self.x = float(self.rect.x)
 
         self.y += my
         self.rect.y = int(self.y)
     
-        if self.physics != None:
-            hit_list = self.collision_test(self.rect,collisions)
-            for tile in hit_list:
-                if my > 0:
-                    self.rect.bottom = tile.top
-                    collision_types["bottom"] = True
-                elif my < 0:
-                    self.rect.top = tile.bottom
-                    collision_types["top"] = True
-                self.y = float(self.rect.y)
-
+        hit_list = self.collision_test(self.rect,self.collisions)
+        for tile in hit_list:
+            if my > 0:
+                self.rect.bottom = tile.top
+                collision_types["bottom"] = True
+            elif my < 0:
+                self.rect.top = tile.bottom
+                collision_types["top"] = True
+            self.y = float(self.rect.y)
+        
         return collision_types
 
     
