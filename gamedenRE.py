@@ -215,9 +215,21 @@ class tilemap:
                         t_width*render_size,
                         t_height*render_size
                     ))))
-        if layer == self.map_data["collision_layer"]: 
-            self.collision_rects = collision_rects
         return collision_rects
+        
+    def get_collision_polys(self, position: tuple, layer: int, render_size: int = 1) -> list:
+        """Returns a list of pygame Rects from a layer from the specified position"""
+        collision_polys = []
+        x, y = position
+        t_width, t_height = self.tile_size
+        m_width, m_height = self.map_size
+
+        for row in range(m_height):
+            for column in range(m_width):
+                tile_id = self.get_tile_id((row,column),layer)
+                if tile_id != 0:
+                    collision_rects.append()
+        return collision_polys
 
     def set_position(self, new_position):
         self.rect.x, self.rect.y = new_position
@@ -270,15 +282,7 @@ def get_ceiling(floor: str):
     return valid_floors[ceiling_id]
 
 class entity:
-    def __init__(self, position, size, tps, tilemap=None):
-        x, y = position
-        w, h = size
-        self.tps = tps
-        self.tilemap = tilemap
-
-class entity:
-    def __init__(self, rect, tps, tilemap=None):
-        self.rect = rect
+    def __init__(self, body, size, tps=300, tilemap=None):
         self.tps = tps
         self.tilemap = tilemap
 
@@ -287,69 +291,18 @@ class entity:
         self.current_texture = None
         self.image_offset_position = [0,0]
 
-        # positioning
-        self.x = float(self.rect.x)
-        self.y = float(self.rect.y)
-
-    def collision_test(self, rect, tiles: list) -> list:
-        hit_list = []
-        for tile in tiles:
-            if rect.colliderect(tile):
-                hit_list.append(tile)
-        return hit_list
+        # pymunk setup
+        self.body = body
+        self.width, self.height = size
+        self.poly = pymunk.Poly(self.body, [
+            (-self.width/2,-self.height/2), (self.width/2,-self.height/2), (self.width/2,self.height/2), (-self.width/2,self.height/2)
+        ])
     
-    def set_position(self,position: tuple):
-        x, y = position
-        self.rect.x = x
-        self.rect.y = y
-        self.x, self.y = position
-    
-    def set_position2(self, position: tuple, tilemap, tilemap_render_size: int = 1):
+    def set_position(self, position: tuple, tilemap, tilemap_render_size: int = 1):
         x, y = position
         m_x, m_y = tilemap.position
         t_width, t_height = tilemap.tile_size
 
-        self.rect.x = m_x+t_width*tilemap.render_size*x
-        self.rect.y = m_y+t_height*tilemap.render_size*y
-        self.x, self.y = [self.rect.x, self.rect.y]
-    
-    def move(self, velocity: tuple) -> dict:
-        collision_types = {
-            "top": False,
-            "right": False,
-            "bottom": False,
-            "left": False
-        }
-        mx, my = velocity
-        
-        # physics: collision detection
-        self.x += mx
-        self.rect.x = int(self.x)
-    
-        markers = [False,False,False,False]
-        hit_list = self.collision_test(self.rect,self.collisions)
-        for tile in hit_list:
-            if mx > 0:
-                self.rect.right = tile.left
-                collision_types["right"] = True
-            elif mx < 0:
-                self.rect.left = tile.right
-                collision_types["left"] = True
-            self.x = float(self.rect.x)
-
-        self.y += my
-        self.rect.y = int(self.y)
-    
-        hit_list = self.collision_test(self.rect,self.collisions)
-        for tile in hit_list:
-            if my > 0:
-                self.rect.bottom = tile.top
-                collision_types["bottom"] = True
-            elif my < 0:
-                self.rect.top = tile.bottom
-                collision_types["top"] = True
-            self.y = float(self.rect.y)
-        
-        return collision_types
-
+        self.body.position[0] = m_x+t_width*tilemap.render_size*x
+        self.body.position[1] = m_y+t_height*tilemap.render_size*y
     

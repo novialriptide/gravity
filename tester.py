@@ -2,6 +2,8 @@ import pymunk
 import pygame
 import sys
 
+import gamedenRE
+
 SCREEN_SIZE = [500,500]
 friction = 1
 elasticity = 0
@@ -53,10 +55,12 @@ for rect in RECTS:
 # character
 body = pymunk.Body(100, 1666)
 body.position = 100,100
+player = gamedenRE.entity(body, [50,50])
+"""
 w, h = 50, 50
 poly = pymunk.Poly(body, [(-w/2,-h/2), (w/2,-h/2), (w/2,h/2), (-w/2,h/2)])
-
-space.add(body, poly)
+"""
+space.add(player.body, player.poly)
 
 while(True):
     for event in pygame.event.get():
@@ -73,8 +77,8 @@ while(True):
     for rect in RECTS:
         pygame.draw.rect(screen, (255,255,255), [rect[1].position[0]-rect[0].width/2, rect[1].position[1]-rect[0].height/2, rect[0].width, rect[0].height])
     pygame.draw.rect(screen, (0,255,0), [
-        body.position[0]-w/2, body.position[1]-w/2,
-        w, h
+        player.body.position[0]-player.width/2, player.body.position[1]-player.height/2,
+        player.width, player.height
     ])
 
     pygame.display.flip()
