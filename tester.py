@@ -1,6 +1,6 @@
 import pymunk
 import pygame
-import time
+import sys
 
 SCREEN_SIZE = [500,500]
 friction = 1
@@ -11,6 +11,10 @@ SEGMENTS = [
     {"elasticity": elasticity, "friction": friction, "point1": [0,0], "point2": [0,500], "radius": 1},
     {"elasticity": elasticity, "friction": friction, "point1": [500,0], "point2": [500,500], "radius": 1}
 ]
+
+def rect_to_poly(rect: pygame.Rect) -> pymunk.Poly:
+    w, h = 10, 10
+    poly = pymunk.Poly(body, [(-w/2,-h/2), (w/2,-h/2), (w/2,h/2), (-w/2,h/2)])
 
 # pygame setup
 pygame.init()
