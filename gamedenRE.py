@@ -139,7 +139,7 @@ class tileset:
                 int(tile_id/(self.tileset_size)[0])
             )
 
-    def pygame_render(self,position: tuple, surface, tile_id: int, render_size: int = 1):
+    def pygame_render(self,position: tuple, surface, tile_id: int):
         """Renders an image of a tile. tile_id can never be 0"""
         t_width, t_height = self.tile_size
         if tile_id != 0:
@@ -153,21 +153,14 @@ class tileset:
                 t_width*t_x, t_height*t_y,
                 t_width, t_height
             ))
-
-            # resizing to fit render_size
-            tile = pygame.transform.scale(tile,(
-                int(t_width*render_size),
-                int(t_height*render_size)
-            ))
-
             surface.blit(tile,position)
 
-    def pygame_render2(self, tile_id: int, render_size=1):
+    def pygame_render2(self, tile_id: int):
         """Returns an image of a tile. tile_id can never be 0"""
         tile = pygame.Surface(self.tile_size, pygame.SRCALPHA, 32)
         tile = tile.convert_alpha()
         if tile_id != 0:
-            self.pygame_render(tile, (0,0), tile_id, render_size=render_size)
+            self.pygame_render(tile, (0,0), tile_id)
             return tile
         else: return tile
 
@@ -179,11 +172,11 @@ def rects_to_polys(space: pymunk.Space, rects: list):
 
     for rect in rects_with_polys:
         def zero_gravity(body, gravity, damping, dt):
-            pymunk.Body.update_velocity(body, (0,0), damping, dt)
-            
-        rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
-        rect_b.position = rect[0].x, rect[0].y
+            pymunk.Body.update_velocity(body, (0,0), damping, dt)    
         _w, _h = rect[0].width, rect[0].height
+
+        rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
+        rect_b.position = rect[0].x+_w/2, rect[0].y+_h/2
         rect_poly = pymunk.Poly(rect_b, [(-_w/2,-_h/2), (_w/2,-_h/2), (_w/2,_h/2), (-_w/2,_h/2)])
         space.add(rect_b, rect_poly)
         rect_b.velocity_func = zero_gravity
@@ -245,12 +238,12 @@ class tilemap:
     def create_new_layer(self):
         self.tilemap["contents"].append([[0 for j in range(self.map_size[0])] for i in range(self.map_size[1])])
     
-    def get_image_layer(self, layer_id: int, render_size: int = 1):
+    def get_image_layer(self, layer_id: int):
         t_width, t_height = self.tile_size
         m_width, m_height = self.map_size
         map_surface = pygame.Surface((
-            t_width*m_width*render_size,
-            t_height*m_height*render_size
+            t_width*m_width,
+            t_height*m_height
         ), pygame.SRCALPHA, 32)
         map_surface = map_surface.convert_alpha()
         
@@ -258,24 +251,24 @@ class tilemap:
             for column in range(m_width):
                 tile_id = self.get_tile_id((row,column),layer_id)
                 self.tileset.pygame_render((
-                    column*t_width*render_size,
-                    row*t_height*render_size
-                ), map_surface, tile_id, render_size=render_size)
+                    column*t_width,
+                    row*t_height
+                ), map_surface, tile_id)
 
         return map_surface
 
-    def get_image_map(self, render_size: int = 1):
+    def get_image_map(self):
         t_width, t_height = self.tile_size
         m_width, m_height = self.map_size
         map_surface = pygame.Surface((
-            t_width*m_width*render_size,
-            t_height*m_height*render_size
+            t_width*m_width,
+            t_height*m_height
         ), pygame.SRCALPHA, 32)
         map_surface = map_surface.convert_alpha()
 
         for layer in range(len(self.map_data["contents"])):
             if layer not in self.map_data["invisible_layers"]:
-                map_surface.blit(self.get_image_layer(layer,render_size=render_size), (0,0))
+                map_surface.blit(self.get_image_layer(layer), (0,0))
         
         return map_surface
 

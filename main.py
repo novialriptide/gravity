@@ -44,20 +44,24 @@ space = pymunk.Space()
 default_tileset = gamedenRE.tileset("test.png",(500,500))
 test_tilemap = gamedenRE.convert_tiledjson("test.json")
 d_tilemap = gamedenRE.tilemap(test_tilemap, default_tileset)
-d_tilemap_image = d_tilemap.get_image_map(render_size=RENDER_SIZE)
+d_tilemap_image = d_tilemap.get_image_map()
+t_w, t_h = d_tilemap_image.get_rect().width, d_tilemap_image.get_rect().height
+d_tilemap_image = pygame.transform.scale(d_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
 map_pos = (0,0)
 
 # player entity setup
 t_width, t_height = d_tilemap.tile_size
-start_pos = (t_width*2*RENDER_SIZE, t_height*1*RENDER_SIZE)
-player_rect = pygame.Rect(start_pos[0], start_pos[1], 200*RENDER_SIZE, 200*RENDER_SIZE)
-player = gamedenRE.entity(player_rect, 300, d_tilemap)
-p_poly = player.pymunk_poly(RENDER_SIZE)
-space.add(p_poly)
+body = pymunk.Body(100, 1666)
+body.position = t_width*2*RENDER_SIZE, t_height*1*RENDER_SIZE
+player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
+space.add(player.body, player.poly)
 
 # gravity
-gravity_speed = 100
+gravity_speed = 10000
 space.gravity = 0,dt*-gravity_speed
+
+# collisions
+polys = gamedenRE.rects_to_polys(space, d_tilemap.get_collision_rects((0,0), 0, render_size=RENDER_SIZE))
 
 # discord rpc
 try:
@@ -81,31 +85,30 @@ while(True):
             if event.key == pygame.K_d: space.gravity = dt*gravity_speed,0
 
     # camera movements
-    _m = int(SCREEN_SIZE[0]/2)-int(player.rect.width/2)
-    camera_pos[0] += (player.rect.x-camera_pos[0]-_m)/camera_lag_speed
-    _m = int(SCREEN_SIZE[1]/2)-int(player.rect.height/2)
-    camera_pos[1] += (player.rect.y-camera_pos[1]-_m)/camera_lag_speed
-
-    player_movement = [0,0]
-    collision_rects = d_tilemap.get_collision_rects(map_pos, 0, render_size=RENDER_SIZE)
+    _m = int(SCREEN_SIZE[0]/2)-int(player.width/2)
+    camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
+    _m = int(SCREEN_SIZE[1]/2)-int(player.height/2)
+    camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
 
     screen.fill((115, 115, 115))
     screen.blit(d_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
-    player.collisions = collision_rects
-    player.move(player_movement)
-    pygame.draw.rect(screen, (100,100,100), [player.rect.x-int(camera_pos[0]), player.rect.y-int(camera_pos[1]), player.rect.width, player.rect.height])
+
+    pygame.draw.rect(screen, (61, 143, 166), [
+        player.body.position[0]-player.width/2-int(camera_pos[0]), player.body.position[1]-player.height/2-int(camera_pos[1]),
+        player.width, player.height
+    ])
 
     # parallax objects
     for f_object in front_objects:
         _fx = f_object["position"][0] - int(camera_pos[0]+(f_object["rect"].width)/2) * f_object["scroll_speed"]
         _fy = f_object["position"][1] - int(camera_pos[1]+(f_object["rect"].height)/2) * f_object["scroll_speed"]
         screen.blit(f_object["image"], (_fx, _fy))
-    
+
     # HUD
     w_width, w_height = SCREEN_SIZE
     fps_text = gamedenRE.text(f"FPS: {int(clock.get_fps())}", 15, "Arial", (0,0,0))
     screen.blit(fps_text, (int(w_width - w_width/75 - fps_text.get_rect().width),int(w_height/75)))
+
     pygame.display.flip()
-    print(p_poly.body.position)
     space.step(0.02)
     clock.tick(60)
