@@ -171,6 +171,28 @@ class tileset:
             return tile
         else: return tile
 
+def rects_to_polys(space: pymunk.Space, rects: list):
+    """This function should executed ONCE"""
+    rects_with_polys = []
+    for rect in rects:
+        rects_with_polys.append([rect])
+
+    for rect in rects_with_polys:
+        def zero_gravity(body, gravity, damping, dt):
+            pymunk.Body.update_velocity(body, (0,0), damping, dt)
+            
+        rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
+        rect_b.position = rect[0].x, rect[0].y
+        _w, _h = rect[0].width, rect[0].height
+        rect_poly = pymunk.Poly(rect_b, [(-_w/2,-_h/2), (_w/2,-_h/2), (_w/2,_h/2), (-_w/2,_h/2)])
+        space.add(rect_b, rect_poly)
+        rect_b.velocity_func = zero_gravity
+
+        rect.append(rect_b)
+        rect.append(rect_poly)
+        
+    return rects_with_polys
+
 class tilemap:
     def __init__(self, map_data: dict, tileset):
         self.map_data = map_data
@@ -216,20 +238,6 @@ class tilemap:
                         t_height*render_size
                     ))))
         return collision_rects
-        
-    def get_collision_polys(self, position: tuple, layer: int, render_size: int = 1) -> list:
-        """Returns a list of pygame Rects from a layer from the specified position"""
-        collision_polys = []
-        x, y = position
-        t_width, t_height = self.tile_size
-        m_width, m_height = self.map_size
-
-        for row in range(m_height):
-            for column in range(m_width):
-                tile_id = self.get_tile_id((row,column),layer)
-                if tile_id != 0:
-                    collision_rects.append()
-        return collision_polys
 
     def set_position(self, new_position):
         self.rect.x, self.rect.y = new_position
@@ -270,16 +278,6 @@ class tilemap:
                 map_surface.blit(self.get_image_layer(layer,render_size=render_size), (0,0))
         
         return map_surface
-
-def get_ceiling(floor: str):
-    valid_floors = ["top", "right", "bottom", "left"]
-    floor_id = 0
-    for floor in valid_floors:
-        if floor == valid_floors: break
-        floor_id += 1
-    if floor_id >= len(valid_floors): floor_id -= 4
-    ceiling_id = floor_id
-    return valid_floors[ceiling_id]
 
 class entity:
     def __init__(self, body, size, tps=300, tilemap=None):

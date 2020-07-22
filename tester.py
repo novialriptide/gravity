@@ -14,7 +14,7 @@ SEGMENTS = [
     {"elasticity": elasticity, "friction": friction, "point1": [500,0], "point2": [500,500], "radius": 1}
 ]
 RECTS = [
-    [pygame.Rect(50,50,100,100)]
+    pygame.Rect(50,50,100,100)
 ]
 
 # pygame setup
@@ -35,22 +35,7 @@ for segment in SEGMENTS:
     s.friction = segment["friction"]
     space.add(s)
 
-rect_number = 0
-for rect in RECTS:
-    def zero_gravity(body, gravity, damping, dt):
-        pymunk.Body.update_velocity(body, (0,0), damping, dt)
-    
-    rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
-    rect_b.position = rect[0].x, rect[0].y
-    _w, _h = rect[0].width, rect[0].height
-    rect_poly = pymunk.Poly(rect_b, [(-_w/2,-_h/2), (_w/2,-_h/2), (_w/2,_h/2), (-_w/2,_h/2)])
-    space.add(rect_b, rect_poly)
-    rect_b.velocity_func = zero_gravity
-
-    rect.append(rect_b)
-    rect.append(rect_poly)
-
-    rect_number += 1
+RECTS = gamedenRE.rects_to_polys(space, RECTS)
 
 # character
 body = pymunk.Body(100, 1666)
