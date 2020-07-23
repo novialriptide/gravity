@@ -52,7 +52,7 @@ map_pos = (0,0)
 # player entity setup
 t_width, t_height = d_tilemap.tile_size
 body = pymunk.Body(100, 1666)
-body.position = t_width*2*RENDER_SIZE, t_height*1*RENDER_SIZE
+body.position = t_width*5*RENDER_SIZE, t_height*4*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
 space.add(player.body, player.poly)
 
@@ -62,14 +62,14 @@ space.gravity = 0,dt*-gravity_speed
 
 # collisions
 polys = gamedenRE.rects_to_polys(space, d_tilemap.get_collision_rects((0,0), 0, render_size=RENDER_SIZE))
-
+"""
 # discord rpc
 try:
     discord_rpc = pypresence.Presence(733388751878881441)
     discord_rpc.connect()
     discord_rpc.update(state="Beta Testing")
 except: pass
-
+"""
 while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
@@ -93,12 +93,19 @@ while(True):
     screen.fill((115, 115, 115))
     screen.blit(d_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
 
+    # draw main object
     pygame.draw.rect(screen, (61, 143, 166), [
         player.body.position[0]-player.width/2-int(camera_pos[0]), player.body.position[1]-player.height/2-int(camera_pos[1]),
         player.width, player.height
     ])
+    
+    # debugging tilemap hitboxes
+    """
+    for rect in polys:
+        pygame.draw.rect(screen, (255,255,255), [rect[1].position[0]-rect[0].width/2-camera_pos[0], rect[1].position[1]-rect[0].height/2-camera_pos[1], rect[0].width, rect[0].height])
+    """
 
-    # parallax objects
+    # front parallax objects
     for f_object in front_objects:
         _fx = f_object["position"][0] - int(camera_pos[0]+(f_object["rect"].width)/2) * f_object["scroll_speed"]
         _fy = f_object["position"][1] - int(camera_pos[1]+(f_object["rect"].height)/2) * f_object["scroll_speed"]

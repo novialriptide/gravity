@@ -213,23 +213,22 @@ class tilemap:
             raise Exception(f"tile location doesn't exist ({row}, {column})")
 
     def get_collision_rects(self, position: tuple, layer: int, render_size: int = 1) -> list:
-        """Returns a list of pygame Rects from a layer from the specified position"""
         collision_rects = []
-        x, y = position
+        a_x, a_y = position
         t_width, t_height = self.tile_size
         m_width, m_height = self.map_size
 
+        y = 0
         for row in range(m_height):
+            x = 0
             for column in range(m_width):
                 tile_id = self.get_tile_id((row,column),layer)
                 if tile_id != 0:
-                    collision_rects.append(pygame.Rect(((
-                        x+column*t_width*render_size,
-                        y+row*t_height*render_size
-                    ),(
-                        t_width*render_size,
-                        t_height*render_size
-                    ))))
+                    collision_rects.append(
+                        pygame.Rect(((a_x+x, a_y+y),(t_width*render_size, t_height*render_size)))
+                    )
+                x += int(t_width*render_size)
+            y += int(t_height*render_size)
         return collision_rects
 
     def set_position(self, new_position):
