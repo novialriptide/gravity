@@ -11,7 +11,7 @@ import gamedenRE
 SCREEN_SIZE = (500,500)
 RENDER_SIZE = 1/5
 
-NOISE_TEXTURE_IMAGE_PATH = "noise.png"
+NOISE_TEXTURE_IMAGE_PATH = "textures/parallax/noise.png"
 NOISE_TEXTURE_IMAGE = pygame.image.load(NOISE_TEXTURE_IMAGE_PATH)
 NOISE_TEXTURE_IMAGE.set_alpha(40)
 
@@ -41,8 +41,8 @@ back_objects = []
 space = pymunk.Space()
 
 # default tile map setup
-default_tileset = gamedenRE.tileset("test.png",(500,500))
-test_tilemap = gamedenRE.convert_tiledjson("map2.json")
+default_tileset = gamedenRE.tileset("textures/tilesets/1.png",(500,500))
+test_tilemap = gamedenRE.convert_tiledjson("levels/map2.json")
 d_tilemap = gamedenRE.tilemap(test_tilemap, default_tileset)
 d_tilemap_image = d_tilemap.get_image_map()
 t_w, t_h = d_tilemap_image.get_rect().width, d_tilemap_image.get_rect().height
