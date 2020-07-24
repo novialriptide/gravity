@@ -42,7 +42,7 @@ space = pymunk.Space()
 
 # default tile map setup
 default_tileset = gamedenRE.tileset("test.png",(500,500))
-test_tilemap = gamedenRE.convert_tiledjson("test.json")
+test_tilemap = gamedenRE.convert_tiledjson("map2.json")
 d_tilemap = gamedenRE.tilemap(test_tilemap, default_tileset)
 d_tilemap_image = d_tilemap.get_image_map()
 t_w, t_h = d_tilemap_image.get_rect().width, d_tilemap_image.get_rect().height
@@ -54,10 +54,11 @@ t_width, t_height = d_tilemap.tile_size
 body = pymunk.Body(100, 1666)
 body.position = t_width*5*RENDER_SIZE, t_height*3*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
+player.poly.friction = 1
 space.add(player.body, player.poly)
 
 # gravity
-gravity_speed = 10000
+gravity_speed = 5000
 space.gravity = 0,dt*-gravity_speed
 
 # collisions
