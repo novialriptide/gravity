@@ -9,7 +9,7 @@ import json
 import gamedenRE
 
 SCREEN_SIZE = (500,500)
-RENDER_SIZE = 1/8
+RENDER_SIZE = 1/5
 
 NOISE_TEXTURE_IMAGE_PATH = "noise.png"
 NOISE_TEXTURE_IMAGE = pygame.image.load(NOISE_TEXTURE_IMAGE_PATH)
@@ -24,7 +24,7 @@ dt = 1
 
 # camera
 camera_pos = [0,0]
-camera_lag_speed = 25
+camera_lag_speed = 20
 
 # parallax objects
 front_objects = [
@@ -52,7 +52,7 @@ map_pos = (0,0)
 # player entity setup
 t_width, t_height = d_tilemap.tile_size
 body = pymunk.Body(100, 1666)
-body.position = t_width*5*RENDER_SIZE, t_height*4*RENDER_SIZE
+body.position = t_width*5*RENDER_SIZE, t_height*3*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
 space.add(player.body, player.poly)
 
