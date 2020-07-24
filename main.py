@@ -55,6 +55,7 @@ body = pymunk.Body(100, 1666)
 body.position = t_width*5*RENDER_SIZE, t_height*3*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
 player.poly.friction = 1
+player.poly.elasticity = 0
 space.add(player.body, player.poly)
 
 # gravity
@@ -91,14 +92,18 @@ while(True):
     _m = int(SCREEN_SIZE[1]/2)-int(player.height/2)
     camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
 
+    # map + background
     screen.fill((115, 115, 115))
     screen.blit(d_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
 
     # draw main object
-    pygame.draw.rect(screen, (61, 143, 166), [
-        player.body.position[0]-player.width/2-int(camera_pos[0]), player.body.position[1]-player.height/2-int(camera_pos[1]),
-        player.width, player.height
-    ])
+    x, y = player.body.position
+    local_vertices = player.poly.get_vertices()
+    player_vertices = []
+    for vertice in local_vertices:
+        vx, vy = vertice
+        player_vertices.append([vx+x-int(camera_pos[0]), vy+y-int(camera_pos[1])])
+    pygame.draw.polygon(screen, (61,143,166), player_vertices)
     
     # debugging tilemap hitboxes
     """

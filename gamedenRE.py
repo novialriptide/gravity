@@ -178,7 +178,7 @@ def rects_to_polys(space: pymunk.Space, rects: list):
         rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
         rect_b.position = rect[0].x+_w/2, rect[0].y+_h/2
         rect_poly = pymunk.Poly(rect_b, [(-_w/2,-_h/2), (_w/2,-_h/2), (_w/2,_h/2), (-_w/2,_h/2)])
-        rect_poly.friction = 1
+        rect_poly.friction = 0.8
         space.add(rect_b, rect_poly)
         rect_b.velocity_func = zero_gravity
 
