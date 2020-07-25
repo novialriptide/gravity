@@ -58,9 +58,9 @@ def get_v_movement(degree,speed):
     y_distance = math.sin(radian)*speed
     return [x_distance, y_distance]
 
-def text(text,size,font,color,render_size=1):
+def text(text,size,font,color):
     pygame.font.init()
-    formatting = pygame.font.SysFont(font,size*render_size)
+    formatting = pygame.font.SysFont(font,size)
     text_surface = formatting.render(text,True,color)
     return text_surface
 
@@ -164,28 +164,26 @@ class tileset:
             return tile
         else: return tile
 
-def rects_to_polys(space: pymunk.Space, rects: list):
+def rects_to_polys(space: pymunk.Space, rects: list) -> list:
     """This function should executed ONCE"""
-    rects_with_polys = []
     for rect in rects:
-        rects_with_polys.append([rect])
-
-    for rect in rects_with_polys:
         def zero_gravity(body, gravity, damping, dt):
             pymunk.Body.update_velocity(body, (0,0), damping, dt)    
         _w, _h = rect[0].width, rect[0].height
 
         rect_b = pymunk.Body(1, 2, body_type=pymunk.Body.STATIC)
         rect_b.position = rect[0].x+_w/2, rect[0].y+_h/2
+        rect_b.gameden = {"tile_id": rect[1]}
         rect_poly = pymunk.Poly(rect_b, [(-_w/2,-_h/2), (_w/2,-_h/2), (_w/2,_h/2), (-_w/2,_h/2)])
         rect_poly.friction = 0.8
+        rect_poly.gameden = {"tile_id": rect[1]}
         space.add(rect_b, rect_poly)
         rect_b.velocity_func = zero_gravity
 
         rect.append(rect_b)
         rect.append(rect_poly)
         
-    return rects_with_polys
+    return rects
 
 class tilemap:
     def __init__(self, map_data: dict, tileset):
@@ -226,7 +224,7 @@ class tilemap:
                 tile_id = self.get_tile_id((row,column),layer)
                 if tile_id != 0:
                     collision_rects.append(
-                        pygame.Rect(((a_x+x, a_y+y),(t_width*render_size, t_height*render_size)))
+                        [pygame.Rect(((a_x+x, a_y+y),(t_width*render_size, t_height*render_size))), tile_id]
                     )
                 x += int(t_width*render_size)
             y += int(t_height*render_size)

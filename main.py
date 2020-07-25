@@ -60,9 +60,29 @@ space.add(player.body, player.poly)
 
 # gravity
 gravity_speed = 5000
-space.gravity = 0,dt*-gravity_speed
+space.gravity = 0,0
 
 # collisions
+def coll_begin(arbiter, space, data):
+    """Two shapes just started touching for the first time this step"""
+    return True
+def coll_pre(arbiter, space, data):
+    """Two shapes are touching during this step"""
+    for shape in arbiter.shapes:
+        print(shape.gameden)
+    return True
+def coll_post(arbiter, space, data):
+    """Two shapes are touching and their collision response has been processed"""
+    return True
+def coll_separate(arbiter, space, data):
+    """Two shapes have just stopped touching for the first time this step"""
+    return True
+
+collision_handler = space.add_default_collision_handler()
+collision_handler.begin = coll_begin
+collision_handler.pre_solve = coll_pre
+collision_handler.post_solve = coll_post
+collision_handler.separate = coll_separate
 polys = gamedenRE.rects_to_polys(space, d_tilemap.get_collision_rects((0,0), 0, render_size=RENDER_SIZE))
 """
 # discord rpc
@@ -105,10 +125,10 @@ while(True):
         player_vertices.append([vx+x-int(camera_pos[0]), vy+y-int(camera_pos[1])])
     pygame.draw.polygon(screen, (61,143,166), player_vertices)
     
-    # debugging tilemap hitboxes
     """
+    # debugging tilemap hitboxes
     for rect in polys:
-        pygame.draw.rect(screen, (255,255,255), [rect[1].position[0]-rect[0].width/2-camera_pos[0], rect[1].position[1]-rect[0].height/2-camera_pos[1], rect[0].width, rect[0].height])
+        pygame.draw.rect(screen, (255,255,255), [rect[2].position[0]-rect[0].width/2-camera_pos[0], rect[2].position[1]-rect[0].height/2-camera_pos[1], rect[0].width, rect[0].height])
     """
 
     # front parallax objects
