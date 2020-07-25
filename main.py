@@ -30,7 +30,7 @@ pygame.display.set_caption("GRAVITY: BETA")
 dt = 1
 
 # camera
-camera_pos = [0,0]
+camera_pos = [-SCREEN_SIZE[0], -SCREEN_SIZE[1]]
 camera_lag_speed = 20
 
 # parallax objects
@@ -47,17 +47,27 @@ back_objects = []
 # pymunk setup
 space = pymunk.Space()
 
-# default tile map setup
-default_tileset = gamedenRE.tileset("textures/tilesets/1.png",(500,500))
-test_tilemap = gamedenRE.convert_tiledjson("levels/map2.json")
-d_tilemap = gamedenRE.tilemap(test_tilemap, default_tileset)
-d_tilemap_image = d_tilemap.get_image_map()
-t_w, t_h = d_tilemap_image.get_rect().width, d_tilemap_image.get_rect().height
-d_tilemap_image = pygame.transform.scale(d_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
-map_pos = (0,0)
+# tile map setup
+map_pos = [0,0]
+loaded_tileset = None
+loaded_tilemap = None
+loaded_tilemap_image = None
+def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
+    global loaded_tileset
+    global loaded_tilemap
+    global loaded_tilemap_image
+
+    loaded_tileset = tileset
+    loaded_tilemap = gamedenRE.convert_tiledjson(tilemap_path)
+    loaded_tilemap = gamedenRE.tilemap(loaded_tilemap, loaded_tileset)
+    loaded_tilemap_image = loaded_tilemap.get_image_map()
+    t_w, t_h = loaded_tilemap_image.get_rect().width, loaded_tilemap_image.get_rect().height
+    loaded_tilemap_image = pygame.transform.scale(loaded_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
+
+load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), "levels/LEVEL_1.json")
 
 # player entity setup
-t_width, t_height = d_tilemap.tile_size
+t_width, t_height = loaded_tilemap.tile_size
 body = pymunk.Body(100, 1666)
 body.position = t_width*5*RENDER_SIZE, t_height*3*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
@@ -65,7 +75,7 @@ player.poly.friction = 1
 player.poly.elasticity = 0
 space.add(player.body, player.poly)
 
-# gravity
+# gravity settings
 gravity_speed = 5000
 space.gravity = 0,0
 
@@ -75,6 +85,9 @@ def coll_begin(arbiter, space, data):
     return True
 def coll_pre(arbiter, space, data):
     """Two shapes are touching during this step"""
+    return True
+def coll_post(arbiter, space, data):
+    """Two shapes are touching and their collision response has been processed"""
     for shape in arbiter.shapes:
         try: 
             def one():
@@ -92,9 +105,6 @@ def coll_pre(arbiter, space, data):
             test_tile_id(shape.gameden["tile_id"])
         except AttributeError: pass
     return True
-def coll_post(arbiter, space, data):
-    """Two shapes are touching and their collision response has been processed"""
-    return True
 def coll_separate(arbiter, space, data):
     """Two shapes have just stopped touching for the first time this step"""
     return True
@@ -104,22 +114,39 @@ collision_handler.begin = coll_begin
 collision_handler.pre_solve = coll_pre
 collision_handler.post_solve = coll_post
 collision_handler.separate = coll_separate
-polys = gamedenRE.rects_to_polys(space, d_tilemap.get_collision_rects((0,0), 0, render_size=RENDER_SIZE))
-"""
-# discord rpc
-try:
-    discord_rpc = pypresence.Presence(733388751878881441)
-    discord_rpc.connect()
-    discord_rpc.update(state="Beta Testing")
-except: pass
-"""
+polys = gamedenRE.rects_to_polys(space, loaded_tilemap.get_collision_rects((0,0), 0, render_size=RENDER_SIZE))
+
+# title screen
+display_title_screen = True
+start_button = gamedenRE.button(pygame.Rect(50,250,125,50))
+while(display_title_screen):
+    # buttons
+    mouse_pos = pygame.mouse.get_pos()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if start_button.is_hovering(mouse_pos):
+                display_title_screen = False
+    
+    # background
+    screen.fill((0,0,0))
+
+    # buttons
+    if start_button.is_hovering(mouse_pos):
+        pygame.draw.rect(screen, (0,255,0), start_button)
+    else:
+        pygame.draw.rect(screen, (255,0,0), start_button)
+
+    pygame.display.flip()
+
+# main game
 while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            discord_rpc.close()
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s: space.gravity = 0,dt*gravity_speed
@@ -128,14 +155,13 @@ while(True):
             if event.key == pygame.K_d: space.gravity = dt*gravity_speed,0
 
     # camera movements
-    _m = int(SCREEN_SIZE[0]/2)-int(player.width/2)
+    _m = int(SCREEN_SIZE[0]/2)
     camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
-    _m = int(SCREEN_SIZE[1]/2)-int(player.height/2)
+    _m = int(SCREEN_SIZE[1]/2)
     camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
-
     # map + background
     screen.fill((115, 115, 115))
-    screen.blit(d_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
+    screen.blit(loaded_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
 
     # draw main object
     x, y = player.body.position
@@ -150,18 +176,21 @@ while(True):
     # debugging tilemap hitboxes
     for rect in polys:
         pygame.draw.rect(screen, (255,255,255), [rect[2].position[0]-rect[0].width/2-camera_pos[0], rect[2].position[1]-rect[0].height/2-camera_pos[1], rect[0].width, rect[0].height])
-    """
-
+    
     # front parallax objects
     for f_object in front_objects:
         _fx = f_object["position"][0] - int(camera_pos[0]+(f_object["rect"].width)/2) * f_object["scroll_speed"]
         _fy = f_object["position"][1] - int(camera_pos[1]+(f_object["rect"].height)/2) * f_object["scroll_speed"]
         screen.blit(f_object["image"], (_fx, _fy))
+    """
 
     # HUD
     w_width, w_height = SCREEN_SIZE
     fps_text = gamedenRE.text(f"FPS: {int(clock.get_fps())}", 15, "Arial", (0,0,0))
     screen.blit(fps_text, (int(w_width - w_width/75 - fps_text.get_rect().width),int(w_height/75)))
+
+    work_in_progress_text = gamedenRE.text("WORK IN PROGRESS", 15, "Arial", (0,0,0))
+    screen.blit(work_in_progress_text, (int(w_width - w_width/75 - work_in_progress_text.get_rect().width),fps_text.get_rect().height+int(w_height/75)))
 
     pygame.display.flip()
     space.step(0.02)

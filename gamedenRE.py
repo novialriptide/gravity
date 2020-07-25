@@ -92,25 +92,15 @@ def grayscale(img):
     return pygame.surfarray.make_surface(arr)
 
 class button:
-    def __init__(self, position: tuple, image_path, render_size: int = 1):
-        x, y = position
-        self.x, self.y = [x,y]
-        self.image = pygame.image.load(image_path)
-        self.render_size = render_size
-
-    @property
-    def rect(self):
-        x, y = self.x, self.y
-        return pygame.Rect(x, y,
-            self.image.get_width()*self.render_size, 
-            self.image.get_height()*self.render_size
-        )
+    def __init__(self, rect: pygame.Rect):
+        self.rect = rect
 
     def is_hovering(self, mouse_position: tuple) -> bool:
         """If the position inputed is on top of the button, it'll return True"""
         return self.rect.collidepoint(mouse_position)
 
-    def pygame_render(self,surface):    
+    def pygame_render(self, surface:pygame.Surface, image_path: str):
+        image = pygame.image.load(image)    
         image = pygame.transform.scale(self.image,(
             self.image.get_width()*self.render_size, 
             self.image.get_height()*self.render_size
