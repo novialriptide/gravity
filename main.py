@@ -5,15 +5,22 @@ import pypresence
 import random
 import sys
 import json
+import ctypes
 
 import gamedenRE
 
+# rendering constants
 SCREEN_SIZE = (500,500)
 RENDER_SIZE = 1/5
 
+# image constants
 NOISE_TEXTURE_IMAGE_PATH = "textures/parallax/noise.png"
 NOISE_TEXTURE_IMAGE = pygame.image.load(NOISE_TEXTURE_IMAGE_PATH)
 NOISE_TEXTURE_IMAGE.set_alpha(40)
+
+# tile constants
+UNTOUCHABLE_TILE_ID = 2
+GOAL_TILE_ID = 3
 
 # pygame setup
 pygame.init()
@@ -69,7 +76,21 @@ def coll_begin(arbiter, space, data):
 def coll_pre(arbiter, space, data):
     """Two shapes are touching during this step"""
     for shape in arbiter.shapes:
-        print(shape.gameden)
+        try: 
+            def one():
+                print("1")
+            def two():
+                print("2")
+
+            def test_tile_id(argument):
+                switcher = {
+                    1: one,
+                    2: two
+                }
+                func = switcher.get(argument, lambda: "invalid tile id")
+                func()
+            test_tile_id(shape.gameden["tile_id"])
+        except AttributeError: pass
     return True
 def coll_post(arbiter, space, data):
     """Two shapes are touching and their collision response has been processed"""
