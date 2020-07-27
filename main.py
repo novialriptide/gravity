@@ -22,6 +22,10 @@ NOISE_TEXTURE_IMAGE.set_alpha(40)
 UNTOUCHABLE_TILE_ID = 2
 GOAL_TILE_ID = 3
 
+# vars
+game_over = False
+game_won = False
+
 # pygame setup
 pygame.init()
 clock = pygame.time.Clock()
@@ -52,6 +56,7 @@ map_pos = [0,0]
 loaded_tileset = None
 loaded_tilemap = None
 loaded_tilemap_image = None
+level_number = 1
 def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
     global loaded_tileset
     global loaded_tilemap
@@ -88,12 +93,15 @@ def coll_pre(arbiter, space, data):
     return True
 def coll_post(arbiter, space, data):
     """Two shapes are touching and their collision response has been processed"""
+
     for shape in arbiter.shapes:
         try: 
-            def one():
-                print("1")
+            def one(): # THIS IS TEMP, UNTIL A TEXTURE IS CREATED FOR THE GOAL TILE
+                global game_won
+                game_won = True
             def two():
-                print("2")
+                global game_over
+                game_over = True
 
             def test_tile_id(argument):
                 switcher = {
@@ -154,23 +162,42 @@ while(True):
             if event.key == pygame.K_a: space.gravity = dt*-gravity_speed,0
             if event.key == pygame.K_d: space.gravity = dt*gravity_speed,0
 
-    # camera movements
-    _m = int(SCREEN_SIZE[0]/2)
-    camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
-    _m = int(SCREEN_SIZE[1]/2)
-    camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
-    # map + background
-    screen.fill((115, 115, 115))
-    screen.blit(loaded_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
+    if game_over:
+        # background
+        screen.fill((255,25,25))
+        
+        # HUD
+        w_width, w_height = SCREEN_SIZE
+        text = gamedenRE.text(f"You lost!", 15, "Arial", (0,0,0))
+        screen.blit(text, (int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)))
+    
+    elif game_won:
+        # background
+        screen.fill((25,255,25))
+        
+        # HUD
+        w_width, w_height = SCREEN_SIZE
+        text = gamedenRE.text(f"You won!", 15, "Arial", (0,0,0))
+        screen.blit(text, (int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)))
 
-    # draw main object
-    x, y = player.body.position
-    local_vertices = player.poly.get_vertices()
-    player_vertices = []
-    for vertice in local_vertices:
-        vx, vy = vertice
-        player_vertices.append([vx+x-int(camera_pos[0]), vy+y-int(camera_pos[1])])
-    pygame.draw.polygon(screen, (61,143,166), player_vertices)
+    else:
+        # camera movements
+        _m = int(SCREEN_SIZE[0]/2)
+        camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
+        _m = int(SCREEN_SIZE[1]/2)
+        camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
+        # map + background
+        screen.fill((115, 115, 115))
+        screen.blit(loaded_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
+
+        # draw main object
+        x, y = player.body.position
+        local_vertices = player.poly.get_vertices()
+        player_vertices = []
+        for vertice in local_vertices:
+            vx, vy = vertice
+            player_vertices.append([vx+x-int(camera_pos[0]), vy+y-int(camera_pos[1])])
+        pygame.draw.polygon(screen, (61,143,166), player_vertices)
     
     """
     # debugging tilemap hitboxes
@@ -189,8 +216,8 @@ while(True):
     fps_text = gamedenRE.text(f"FPS: {int(clock.get_fps())}", 15, "Arial", (0,0,0))
     screen.blit(fps_text, (int(w_width - w_width/75 - fps_text.get_rect().width),int(w_height/75)))
 
-    work_in_progress_text = gamedenRE.text("WORK IN PROGRESS", 15, "Arial", (0,0,0))
-    screen.blit(work_in_progress_text, (int(w_width - w_width/75 - work_in_progress_text.get_rect().width),fps_text.get_rect().height+int(w_height/75)))
+    level_text = gamedenRE.text(f"level loaded: {level_number}", 15, "Arial", (0,0,0))
+    screen.blit(level_text, (int(w_width - w_width/75 - level_text.get_rect().width),fps_text.get_rect().height+int(w_height/75)))
 
     pygame.display.flip()
     space.step(0.02)
