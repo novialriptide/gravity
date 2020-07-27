@@ -1,13 +1,25 @@
-import pygame
-import pymunk
-import pypresence
-
-import random
 import sys
+import os
 import json
 import ctypes
 
 import gamedenRE
+
+try:
+    import pygame
+    import pymunk
+    import pypresence
+except:
+    # requirements.txt setup
+    confirm_installation = input("Hi, this is a message from the developer of GRAVITY.\n\nIn order to run this game, you need to install a few libraries. Is it okay if I download them for you?\n(y/n) > ")
+    if confirm_installation == "y":
+        os.system("pip install -r requirements.txt")
+        print("Complete!")
+    if confirm_installation == "n":
+        sys.exit()
+    import pygame
+    import pymunk
+    import pypresence
 
 # rendering constants
 SCREEN_SIZE = (500,500)
@@ -74,7 +86,7 @@ load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), "levels/LE
 # player entity setup
 t_width, t_height = loaded_tilemap.tile_size
 body = pymunk.Body(100, 1666)
-body.position = t_width*5*RENDER_SIZE, t_height*3*RENDER_SIZE
+body.position = t_width*2*RENDER_SIZE, t_height*3*RENDER_SIZE
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
 player.poly.friction = 1
 player.poly.elasticity = 0
