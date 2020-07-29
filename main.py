@@ -1,25 +1,15 @@
-import sys
 import os
+os.system("pip install -r requirements.txt")
+
+import sys
 import json
 import ctypes
 
 import gamedenRE
 
-try:
-    import pygame
-    import pymunk
-    import pypresence
-except:
-    # requirements.txt setup
-    confirm_installation = input("Hi, this is a message from the developer of GRAVITY.\n\nIn order to run this game, you need to install a few libraries. Is it okay if I download them for you?\n(y/n) > ")
-    if confirm_installation == "y":
-        os.system("pip install -r requirements.txt")
-        print("Complete!")
-    if confirm_installation == "n":
-        sys.exit()
-    import pygame
-    import pymunk
-    import pypresence
+import pygame
+import pymunk
+import pypresence
 
 # rendering constants
 SCREEN_SIZE = (500,500)
@@ -33,6 +23,7 @@ NOISE_TEXTURE_IMAGE.set_alpha(40)
 # tile constants
 UNTOUCHABLE_TILE_ID = 2
 GOAL_TILE_ID = 3
+START_TILE_ID = 4
 
 # vars
 game_over = False
@@ -108,17 +99,17 @@ def coll_post(arbiter, space, data):
 
     for shape in arbiter.shapes:
         try: 
-            def one(): # THIS IS TEMP, UNTIL A TEXTURE IS CREATED FOR THE GOAL TILE
-                global game_won
-                game_won = True
             def two():
                 global game_over
                 game_over = True
+            def three():
+                global game_won
+                game_won = True
 
             def test_tile_id(argument):
                 switcher = {
-                    1: one,
-                    2: two
+                    2: two,
+                    3: three
                 }
                 func = switcher.get(argument, lambda: "invalid tile id")
                 func()
