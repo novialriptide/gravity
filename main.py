@@ -157,13 +157,15 @@ display_title_screen = True
 start_button = gamedenRE.button(pygame.Rect(50,250,125,50))
 while(display_title_screen):
     # buttons
+    left_mouse_click = False
+    right_mouse_click = False
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if start_button.is_hovering(mouse_pos):
-                display_title_screen = False
+            if event.button == 1:
+                left_mouse_click = True
     
     # background
     screen.fill((0,0,0))
@@ -171,6 +173,8 @@ while(display_title_screen):
     # buttons
     if start_button.is_hovering(mouse_pos):
         pygame.draw.rect(screen, (0,255,0), start_button)
+    elif start_button.is_hovering(mouse_pos) and left_mouse_click:
+        display_title_screen = False
     else:
         pygame.draw.rect(screen, (255,0,0), start_button)
 
