@@ -26,7 +26,11 @@ GOAL_TILE_ID = 3
 START_TILE_ID = 4
 
 # vars
+OFFICIAL_LEVELS = os.listdir("levels")
 attempt_number = 0
+
+title_screen = True
+level_selector = False
 game_over = False
 game_won = False
 
@@ -90,10 +94,7 @@ def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
     loaded_tilemap_image = pygame.transform.scale(loaded_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
     execute_data_points(loaded_tilemap, 0)
 
-load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), "levels/LEVEL_1.json")
-
 # player entity setup
-t_width, t_height = loaded_tilemap.tile_size
 body = pymunk.Body(100, 1666)
 body.position = player_pos
 player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
@@ -143,7 +144,6 @@ collision_handler.begin = coll_begin
 collision_handler.pre_solve = coll_pre
 collision_handler.post_solve = coll_post
 collision_handler.separate = coll_separate
-polys = gamedenRE.rects_to_polys(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
 
 # game functions
 def game_reset():
@@ -154,7 +154,6 @@ def game_reset():
 
 # title screen
 display_title_screen = True
-start_button = gamedenRE.button(pygame.Rect(50,250,125,50))
 while(display_title_screen):
     # buttons
     left_mouse_click = False
@@ -167,20 +166,52 @@ while(display_title_screen):
             if event.button == 1:
                 left_mouse_click = True
     
-    # background
-    screen.fill((0,0,0))
+    if title_screen:
+        # background
+        screen.fill((0,0,0))
 
-    # buttons
-    if start_button.is_hovering(mouse_pos):
-        pygame.draw.rect(screen, (0,255,0), start_button)
-    elif start_button.is_hovering(mouse_pos) and left_mouse_click:
-        display_title_screen = False
-    else:
-        pygame.draw.rect(screen, (255,0,0), start_button)
+        # buttons
+        start_button = gamedenRE.button(pygame.Rect(50,250,125,50))
+        if start_button.is_hovering(mouse_pos) and left_mouse_click:
+            title_screen = False
+            level_selector = True
+            pygame.time.delay(1000)
+
+        elif start_button.is_hovering(mouse_pos):
+            pygame.draw.rect(screen, (0,255,0), start_button.rect)
+
+        else:
+            pygame.draw.rect(screen, (255,0,0), start_button.rect)
+
+    if level_selector:
+        # background
+        screen.fill((0,0,0))
+
+        # buttons
+        y_offset = 0
+        for level in OFFICIAL_LEVELS:
+            # rendering
+            w_width, w_height = SCREEN_SIZE
+            button_text = gamedenRE.text(level, 20, "Arial", (0,0,0))
+            button_pos = (int(w_width/20),int(w_height/2 - button_text.get_rect().height/2)+y_offset)
+            button = gamedenRE.button(pygame.Rect(button_pos[0], button_pos[1], button_text.get_rect().width, button_text.get_rect().height))
+            
+            if button.is_hovering(mouse_pos) and left_mouse_click:
+                load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
+                display_title_screen = False
+
+            elif button.is_hovering(mouse_pos):
+                pygame.draw.rect(screen, (0,255,0), button.rect)
+
+            else:
+                pygame.draw.rect(screen, (255,0,0), button.rect)
+            screen.blit(button_text, button_pos)
+            y_offset += 50
 
     pygame.display.flip()
 
 # main game
+polys = gamedenRE.rects_to_polys(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
 while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
@@ -220,7 +251,7 @@ while(True):
 
         screen.blit(text, button_pos)
     
-    elif game_won:
+    if game_won:
         # background
         screen.fill((25,255,25))
         
@@ -229,7 +260,7 @@ while(True):
         text = gamedenRE.text(f"You won!", 15, "Arial", (0,0,0))
         screen.blit(text, (int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)))
 
-    else:
+    if game_over == False and game_won == False:
         # camera movements
         _m = int(SCREEN_SIZE[0]/2)
         camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
