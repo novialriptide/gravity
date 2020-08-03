@@ -59,13 +59,21 @@ back_objects = []
 # pymunk setup
 space = pymunk.Space()
 
-# tile map setup
+# player entity setup
 player_pos = 0,0
+body = pymunk.Body(100, 1666)
+body.position = player_pos
+player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
+player.poly.friction = 1
+player.poly.elasticity = 0
+space.add(player.body, player.poly)
+
+# tile map setup
 map_pos = [0,0]
 loaded_tileset = None
 loaded_tilemap = None
 loaded_tilemap_image = None
-level_number = 1
+loaded_tilemap_file_name = None
 
 def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
     """currently just marks the spawn point"""
@@ -78,29 +86,23 @@ def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
 
             # sets the player's spawn position
             if tile_id == 1:
-                player_pos =  t_width*column*RENDER_SIZE, t_height*row*RENDER_SIZE
+                player.body.position = t_width*column*RENDER_SIZE, t_height*row*RENDER_SIZE
 
 def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
     global loaded_tileset
     global loaded_tilemap
     global loaded_tilemap_image
+    global loaded_tilemap_file_name
 
     loaded_tileset = tileset
     loaded_tilemap = gamedenRE.convert_tiledjson(tilemap_path)
     loaded_tilemap["invisible_layers"] = [0]
     loaded_tilemap = gamedenRE.tilemap(loaded_tilemap, loaded_tileset)
     loaded_tilemap_image = loaded_tilemap.get_image_map()
+    loaded_tilemap_file_name = tilemap_path.replace("levels/", "").replace(".json", "")
     t_w, t_h = loaded_tilemap_image.get_rect().width, loaded_tilemap_image.get_rect().height
     loaded_tilemap_image = pygame.transform.scale(loaded_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
     execute_data_points(loaded_tilemap, 0)
-
-# player entity setup
-body = pymunk.Body(100, 1666)
-body.position = player_pos
-player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
-player.poly.friction = 1
-player.poly.elasticity = 0
-space.add(player.body, player.poly)
 
 # gravity settings
 gravity_speed = 5000
@@ -110,12 +112,13 @@ space.gravity = 0,0
 def coll_begin(arbiter, space, data):
     """Two shapes just started touching for the first time this step"""
     return True
+
 def coll_pre(arbiter, space, data):
     """Two shapes are touching during this step"""
     return True
+
 def coll_post(arbiter, space, data):
     """Two shapes are touching and their collision response has been processed"""
-
     for shape in arbiter.shapes:
         try: 
             def two():
@@ -135,6 +138,7 @@ def coll_post(arbiter, space, data):
             test_tile_id(shape.gameden["tile_id"])
         except AttributeError: pass
     return True
+
 def coll_separate(arbiter, space, data):
     """Two shapes have just stopped touching for the first time this step"""
     return True
@@ -149,8 +153,7 @@ collision_handler.separate = coll_separate
 def game_reset():
     execute_data_points(loaded_tilemap, 0)
     space.gravity = 0,0
-    player.body.position = player_pos
-    player.body.velocity = 0,0
+    player.body.velocity = pymunk.Vec2d(0.0, 0.0)
 
 # title screen
 display_title_screen = True
@@ -188,12 +191,12 @@ while(display_title_screen):
         screen.fill((0,0,0))
 
         # buttons
-        y_offset = 0
+        y_margin = 0
         for level in OFFICIAL_LEVELS:
             # rendering
             w_width, w_height = SCREEN_SIZE
             button_text = gamedenRE.text(level, 20, "Arial", (0,0,0))
-            button_pos = (int(w_width/20),int(w_height/2 - button_text.get_rect().height/2)+y_offset)
+            button_pos = (int(w_width/20),int(w_height/2 - button_text.get_rect().height/2)+y_margin)
             button = gamedenRE.button(pygame.Rect(button_pos[0], button_pos[1], button_text.get_rect().width, button_text.get_rect().height))
             
             if button.is_hovering(mouse_pos) and left_mouse_click:
@@ -206,12 +209,12 @@ while(display_title_screen):
             else:
                 pygame.draw.rect(screen, (255,0,0), button.rect)
             screen.blit(button_text, button_pos)
-            y_offset += 50
+            y_margin += 50
 
     pygame.display.flip()
 
 # main game
-polys = gamedenRE.rects_to_polys(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
+polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
 while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
@@ -257,15 +260,25 @@ while(True):
         
         # HUD
         w_width, w_height = SCREEN_SIZE
-        text = gamedenRE.text(f"You won!", 15, "Arial", (0,0,0))
-        screen.blit(text, (int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)))
+        text = gamedenRE.text(f"Click on me to move on to the next level.", 15, "Arial", (0,0,0))
 
+        # button
+        button_pos = [int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)]
+        button_rect = pygame.Rect(button_pos[0], button_pos[1], text.get_rect().width, text.get_rect().height)
+        button = gamedenRE.button(button_rect)
+        pygame.draw.rect(screen, (0,100,0), button_rect)
+        if left_mouse_click and button.is_hovering(mouse_pos):
+            load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
+            game_won = False
+
+    # main game with tilemap
     if game_over == False and game_won == False:
         # camera movements
         _m = int(SCREEN_SIZE[0]/2)
         camera_pos[0] += (player.body.position[0]-camera_pos[0]-_m)/camera_lag_speed
         _m = int(SCREEN_SIZE[1]/2)
         camera_pos[1] += (player.body.position[1]-camera_pos[1]-_m)/camera_lag_speed
+
         # map + background
         screen.fill((115, 115, 115))
         screen.blit(loaded_tilemap_image, (map_pos[0]-int(camera_pos[0]), map_pos[1]-int(camera_pos[1])))
@@ -298,6 +311,9 @@ while(True):
 
     attempt_text = gamedenRE.text(f"attempt #{attempt_number}", 15, "Arial", (0,0,0))
     screen.blit(attempt_text, (int(w_width - w_width/75 - attempt_text.get_rect().width),fps_text.get_rect().height+int(w_height/75)))
+
+    level_text = gamedenRE.text(f"level #{loaded_tilemap_file_name}", 15, "Arial", (0,0,0))
+    screen.blit(level_text, (int(w_width - w_width/75 - level_text.get_rect().width),fps_text.get_rect().height+attempt_text.get_rect().height+int(w_height/75)))
 
     pygame.display.flip()
     space.step(0.02)

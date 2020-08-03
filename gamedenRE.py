@@ -164,7 +164,7 @@ class tileset:
             return tile
         else: return tile
 
-def rects_to_polys(space: pymunk.Space, rects: list) -> list:
+def add_rects_to_space(space: pymunk.Space, rects: list) -> list:
     """This function should executed ONCE"""
     for rect in rects:
         def zero_gravity(body, gravity, damping, dt):
