@@ -178,7 +178,7 @@ def game_reset():
 display_title_screen = True
 while(display_title_screen):
     # buttons
-    left_mouse_click = False
+    left_mouse_click_up = False
     right_mouse_click = False
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
@@ -187,9 +187,9 @@ while(display_title_screen):
         if event.type == pygame.VIDEORESIZE:
             SCREEN_SIZE = event.w, event.h
             screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                left_mouse_click = True
+                left_mouse_click_up = True
     
     if title_screen:
         # background
@@ -197,7 +197,7 @@ while(display_title_screen):
 
         # buttons
         start_button = gamedenRE.button(pygame.Rect(50,250,125,50))
-        if start_button.is_hovering(mouse_pos) and left_mouse_click:
+        if start_button.is_hovering(mouse_pos) and left_mouse_click_up:
             title_screen = False
             level_selector = True
             pygame.time.delay(1000)
@@ -221,7 +221,7 @@ while(display_title_screen):
             button_pos = (int(w_width/20),int(w_height/2 - button_text.get_rect().height/2)+y_margin)
             button = gamedenRE.button(pygame.Rect(button_pos[0], button_pos[1], button_text.get_rect().width, button_text.get_rect().height))
             
-            if button.is_hovering(mouse_pos) and left_mouse_click:
+            if button.is_hovering(mouse_pos) and left_mouse_click_up:
                 load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
                 display_title_screen = False
 
@@ -241,7 +241,7 @@ while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
 
-    left_mouse_click = False
+    left_mouse_click_up = False
     right_mouse_click = False
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
@@ -255,9 +255,9 @@ while(True):
             if event.key == pygame.K_w: space.gravity = 0,dt*-gravity_speed
             if event.key == pygame.K_a: space.gravity = dt*-gravity_speed,0
             if event.key == pygame.K_d: space.gravity = dt*gravity_speed,0
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                left_mouse_click = True
+                left_mouse_click_up = True
 
     if game_over:
         # background
@@ -272,7 +272,7 @@ while(True):
         button_rect = pygame.Rect(button_pos[0], button_pos[1], text.get_rect().width, text.get_rect().height)
         button = gamedenRE.button(button_rect)
         pygame.draw.rect(screen, (0,255,0), button_rect)
-        if left_mouse_click and button.is_hovering(mouse_pos):
+        if left_mouse_click_up and button.is_hovering(mouse_pos):
             game_reset()
             game_over = False
             attempt_number += 1
@@ -292,11 +292,13 @@ while(True):
         button_rect = pygame.Rect(button_pos[0], button_pos[1], text.get_rect().width, text.get_rect().height)
         button = gamedenRE.button(button_rect)
         pygame.draw.rect(screen, (0,100,0), button_rect)
-        if left_mouse_click and button.is_hovering(mouse_pos):
-            load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
+        if left_mouse_click_up and button.is_hovering(mouse_pos):
+            load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{int(loaded_tilemap_file_name)+1}.json")
             unload_tilemap_collisions()
             load_player_entity()
             load_tilemap_collisions()
+            game_reset()
+            attempt_number = 0
             game_won = False
 
     # main game with tilemap
