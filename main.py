@@ -37,7 +37,7 @@ game_won = False
 # pygame setup
 pygame.init()
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode(SCREEN_SIZE)
+screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
 pygame.display.set_caption("GRAVITY: BETA")
 dt = 1
 
@@ -60,13 +60,20 @@ back_objects = []
 space = pymunk.Space()
 
 # player entity setup
-player_pos = 0,0
-body = pymunk.Body(100, 1666)
-body.position = player_pos
-player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
-player.poly.friction = 1
-player.poly.elasticity = 0
-space.add(player.body, player.poly)
+player_pos = None
+player = None
+def load_player_entity():
+    global player_pos
+    global player
+
+    player_pos = 0,0
+    body = pymunk.Body(100, 1666)
+    body.position = player_pos
+    player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
+    player.poly.friction = 1
+    player.poly.elasticity = 0
+    space.add(player.body, player.poly)
+load_player_entity()
 
 # tile map setup
 map_pos = [0,0]
@@ -86,7 +93,7 @@ def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
 
             # sets the player's spawn position
             if tile_id == 1:
-                player.body.position = t_width*column*RENDER_SIZE, t_height*row*RENDER_SIZE
+                player.body.position = t_width*column*RENDER_SIZE+(t_width*RENDER_SIZE)/2, t_height*row*RENDER_SIZE+(t_height*RENDER_SIZE)/2
 
 def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
     global loaded_tileset
@@ -150,10 +157,22 @@ collision_handler.post_solve = coll_post
 collision_handler.separate = coll_separate
 
 # game functions
+polys = None
+def load_tilemap_collisions():
+    global polys
+    polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
+
+def unload_tilemap_collisions():
+    for body in space.bodies:
+        space.remove(body)
+
+    for shape in space.shapes:
+        space.remove(shape)
+
 def game_reset():
-    execute_data_points(loaded_tilemap, 0)
     space.gravity = 0,0
-    player.body.velocity = pymunk.Vec2d(0.0, 0.0)
+    player.body.velocity = 0,0
+    execute_data_points(loaded_tilemap, 0)
 
 # title screen
 display_title_screen = True
@@ -165,6 +184,9 @@ while(display_title_screen):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
+        if event.type == pygame.VIDEORESIZE:
+            SCREEN_SIZE = event.w, event.h
+            screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 left_mouse_click = True
@@ -213,8 +235,8 @@ while(display_title_screen):
 
     pygame.display.flip()
 
+load_tilemap_collisions()
 # main game
-polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
 while(True):
     if clock.get_fps() != 0: dt = clock.get_fps()/1000
     else: dt = 0
@@ -225,6 +247,9 @@ while(True):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
+        if event.type == pygame.VIDEORESIZE:
+            SCREEN_SIZE = event.w, event.h
+            screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s: space.gravity = 0,dt*gravity_speed
             if event.key == pygame.K_w: space.gravity = 0,dt*-gravity_speed
@@ -269,6 +294,9 @@ while(True):
         pygame.draw.rect(screen, (0,100,0), button_rect)
         if left_mouse_click and button.is_hovering(mouse_pos):
             load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
+            unload_tilemap_collisions()
+            load_player_entity()
+            load_tilemap_collisions()
             game_won = False
 
     # main game with tilemap
