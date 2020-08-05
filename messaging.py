@@ -19,9 +19,9 @@ class channel:
         return message
     
     def log_raw(self, content: str):
-        message = message(None, content)
-        self.messages.append(message)
-        return message
+        msg = message(None, content)
+        self.messages.append(msg)
+        return msg
 
 '''
 novial = user("novial")

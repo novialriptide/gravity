@@ -6,6 +6,7 @@ import json
 import ctypes
 
 import gamedenRE
+import messaging
 
 import pygame
 import pymunk
@@ -26,6 +27,7 @@ GOAL_TILE_ID = 3
 START_TILE_ID = 4
 
 # vars
+game_console = messaging.channel()
 OFFICIAL_LEVELS = os.listdir("levels")
 attempt_number = 0
 
@@ -33,6 +35,7 @@ title_screen = True
 level_selector = False
 game_over = False
 game_won = False
+display_console = False
 
 # pygame setup
 pygame.init()
@@ -93,6 +96,7 @@ def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
 
             # sets the player's spawn position
             if tile_id == 1:
+                game_console.log_raw("positioned the main object in its place")
                 player.body.position = t_width*column*RENDER_SIZE+(t_width*RENDER_SIZE)/2, t_height*row*RENDER_SIZE+(t_height*RENDER_SIZE)/2
 
 def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
@@ -160,16 +164,22 @@ collision_handler.separate = coll_separate
 polys = None
 def load_tilemap_collisions():
     global polys
+    game_console.log_raw("loaded tilemap collisions")
     polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
+    
 
 def unload_tilemap_collisions():
+    game_console.log_raw("unloading tilemap collisions")
     for body in space.bodies:
+        game_console.log_raw(f"unloading: {body}")
         space.remove(body)
 
     for shape in space.shapes:
+        game_console.log_raw(f"unloading: {shape}")
         space.remove(shape)
 
 def game_reset():
+    game_console.log_raw(f"resetting game")
     space.gravity = 0,0
     player.body.velocity = 0,0
     execute_data_points(loaded_tilemap, 0)
@@ -183,12 +193,15 @@ while(display_title_screen):
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            game_console.log_raw(f"system exit")
             sys.exit()
         if event.type == pygame.VIDEORESIZE:
+            game_console.log_raw(f"resizing screen to {event.w, event.h} from {SCREEN_SIZE}")
             SCREEN_SIZE = event.w, event.h
             screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
+                game_console.log_raw(f"left mouse button clicked up")
                 left_mouse_click_up = True
     
     if title_screen:
@@ -201,6 +214,7 @@ while(display_title_screen):
             title_screen = False
             level_selector = True
             pygame.time.delay(1000)
+            left_mouse_click_up = False
 
         elif start_button.is_hovering(mouse_pos):
             pygame.draw.rect(screen, (0,255,0), start_button.rect)
@@ -224,6 +238,7 @@ while(display_title_screen):
             if button.is_hovering(mouse_pos) and left_mouse_click_up:
                 load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
                 display_title_screen = False
+                left_mouse_click_up = False
 
             elif button.is_hovering(mouse_pos):
                 pygame.draw.rect(screen, (0,255,0), button.rect)
@@ -246,18 +261,37 @@ while(True):
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            game_console.log_raw(f"system exit")
             sys.exit()
         if event.type == pygame.VIDEORESIZE:
+            game_console.log_raw(f"resizing screen to {event.w, event.h} from {SCREEN_SIZE}")
             SCREEN_SIZE = event.w, event.h
             screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_s: space.gravity = 0,dt*gravity_speed
-            if event.key == pygame.K_w: space.gravity = 0,dt*-gravity_speed
-            if event.key == pygame.K_a: space.gravity = dt*-gravity_speed,0
-            if event.key == pygame.K_d: space.gravity = dt*gravity_speed,0
+            # changing gravity keys
+            if event.key == pygame.K_s: 
+                space.gravity = 0,dt*gravity_speed
+                game_console.log_raw(f"gravity has been set to {space.gravity}")
+            if event.key == pygame.K_w: 
+                space.gravity = 0,dt*-gravity_speed
+                game_console.log_raw(f"gravity has been set to {space.gravity}")
+            if event.key == pygame.K_a: 
+                space.gravity = dt*-gravity_speed,0
+                game_console.log_raw(f"gravity has been set to {space.gravity}")
+            if event.key == pygame.K_d: 
+                space.gravity = dt*gravity_speed,0
+                game_console.log_raw(f"gravity has been set to {space.gravity}")
+
+            # console
+            if event.key == pygame.K_BACKQUOTE:
+                if display_console: display_console = False
+                elif display_console == False: display_console = True
+
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
+                game_console.log_raw(f"left mouse button clicked up")
                 left_mouse_click_up = True
+
 
     if game_over:
         # background
@@ -333,6 +367,17 @@ while(True):
         _fy = f_object["position"][1] - int(camera_pos[1]+(f_object["rect"].height)/2) * f_object["scroll_speed"]
         screen.blit(f_object["image"], (_fx, _fy))
     """
+
+    if display_console:
+        # VERY HEAVY. NEEDS OPTIMIZING
+        w_width, w_height = SCREEN_SIZE
+        y_offset = 0
+        position = w_height/75, w_height/75
+        for message in game_console.messages:
+            text = gamedenRE.text(message.content, 10, "Arial", (0,0,0))
+            
+            screen.blit(text, (position[0], position[1]+y_offset))
+            y_offset += text.get_rect().height
 
     # HUD
     w_width, w_height = SCREEN_SIZE
