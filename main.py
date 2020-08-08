@@ -3,7 +3,6 @@ os.system("pip install -r requirements.txt")
 
 import sys
 import json
-import ctypes
 
 import gamedenRE
 import messaging
@@ -14,7 +13,7 @@ import pypresence
 
 # rendering constants
 SCREEN_SIZE = (500,500)
-RENDER_SIZE = 1/5
+RENDER_SIZE = 10
 
 # image constants
 NOISE_TEXTURE_IMAGE_PATH = "textures/parallax/noise.png"
@@ -36,6 +35,8 @@ level_selector = False
 game_over = False
 game_won = False
 display_console = False
+
+DEFAULT_FONT = "textures/pixel.ttf"
 
 # pygame setup
 pygame.init()
@@ -70,15 +71,16 @@ def load_player_entity():
     global player
 
     player_pos = 0,0
-    body = pymunk.Body(100, 1666)
+    body = pymunk.Body(10, 1666)
     body.position = player_pos
-    player = gamedenRE.entity(body, [200*RENDER_SIZE,200*RENDER_SIZE])
+    player = gamedenRE.entity(body, [5*RENDER_SIZE,5*RENDER_SIZE])
     player.poly.friction = 1
     player.poly.elasticity = 0
     space.add(player.body, player.poly)
 load_player_entity()
 
 # tile map setup
+default_tilemap = gamedenRE.tileset("textures/tilesets/1.png", (10,10))
 map_pos = [0,0]
 loaded_tileset = None
 loaded_tilemap = None
@@ -166,7 +168,6 @@ def load_tilemap_collisions():
     global polys
     game_console.log_raw("loaded tilemap collisions")
     polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
-    
 
 def unload_tilemap_collisions():
     game_console.log_raw("unloading tilemap collisions")
@@ -213,7 +214,6 @@ while(display_title_screen):
         if start_button.is_hovering(mouse_pos) and left_mouse_click_up:
             title_screen = False
             level_selector = True
-            pygame.time.delay(1000)
             left_mouse_click_up = False
 
         elif start_button.is_hovering(mouse_pos):
@@ -231,12 +231,12 @@ while(display_title_screen):
         for level in OFFICIAL_LEVELS:
             # rendering
             w_width, w_height = SCREEN_SIZE
-            button_text = gamedenRE.text(level, 20, "Arial", (0,0,0))
+            button_text = gamedenRE.text2(level, 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
             button_pos = (int(w_width/20),int(w_height/2 - button_text.get_rect().height/2)+y_margin)
             button = gamedenRE.button(pygame.Rect(button_pos[0], button_pos[1], button_text.get_rect().width, button_text.get_rect().height))
             
             if button.is_hovering(mouse_pos) and left_mouse_click_up:
-                load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{level}")
+                load_tilemap(default_tilemap, f"levels/{level}")
                 display_title_screen = False
                 left_mouse_click_up = False
 
@@ -246,7 +246,7 @@ while(display_title_screen):
             else:
                 pygame.draw.rect(screen, (255,0,0), button.rect)
             screen.blit(button_text, button_pos)
-            y_margin += 50
+            y_margin += button_text.get_rect().height + RENDER_SIZE
 
     pygame.display.flip()
 
@@ -292,20 +292,16 @@ while(True):
                 game_console.log_raw(f"left mouse button clicked up")
                 left_mouse_click_up = True
 
-
     if game_over:
-        # background
+        # display
         screen.fill((255,25,25))
-        
-        # HUD
         w_width, w_height = SCREEN_SIZE
-        text = gamedenRE.text(f"Click on me to retry.", 15, "Arial", (0,0,0))
+        text = gamedenRE.text2(f"Click on me to retry.", 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
 
         # button
         button_pos = [int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)]
         button_rect = pygame.Rect(button_pos[0], button_pos[1], text.get_rect().width, text.get_rect().height)
         button = gamedenRE.button(button_rect)
-        pygame.draw.rect(screen, (0,255,0), button_rect)
         if left_mouse_click_up and button.is_hovering(mouse_pos):
             game_reset()
             game_over = False
@@ -314,12 +310,10 @@ while(True):
         screen.blit(text, button_pos)
     
     if game_won:
-        # background
+        # display
         screen.fill((25,255,25))
-        
-        # HUD
         w_width, w_height = SCREEN_SIZE
-        text = gamedenRE.text(f"Click on me to move on to the next level.", 15, "Arial", (0,0,0))
+        text = gamedenRE.text2(f"Click on me to move on to the next level.", 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
 
         # button
         button_pos = [int(w_width/2 - text.get_rect().width/2),int(w_height/2 - text.get_rect().height/2)]
@@ -327,7 +321,7 @@ while(True):
         button = gamedenRE.button(button_rect)
         pygame.draw.rect(screen, (0,100,0), button_rect)
         if left_mouse_click_up and button.is_hovering(mouse_pos):
-            load_tilemap(gamedenRE.tileset("textures/tilesets/1.png", (500,500)), f"levels/{int(loaded_tilemap_file_name)+1}.json")
+            load_tilemap(default_tilemap, f"levels/{int(loaded_tilemap_file_name)+1}.json")
             unload_tilemap_collisions()
             load_player_entity()
             load_tilemap_collisions()
@@ -374,20 +368,20 @@ while(True):
         y_offset = 0
         position = w_height/75, w_height/75
         for message in game_console.messages:
-            text = gamedenRE.text(message.content, 10, "Arial", (0,0,0))
+            text = gamedenRE.text2(message.content, 0.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
             
             screen.blit(text, (position[0], position[1]+y_offset))
             y_offset += text.get_rect().height
 
     # HUD
     w_width, w_height = SCREEN_SIZE
-    fps_text = gamedenRE.text(f"FPS: {int(clock.get_fps())}", 15, "Arial", (0,0,0))
+    fps_text = gamedenRE.text2(f"FPS: {int(clock.get_fps())}", 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
     screen.blit(fps_text, (int(w_width - w_width/75 - fps_text.get_rect().width),int(w_height/75)))
 
-    attempt_text = gamedenRE.text(f"attempt #{attempt_number}", 15, "Arial", (0,0,0))
+    attempt_text = gamedenRE.text2(f"attempt #{attempt_number}", 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
     screen.blit(attempt_text, (int(w_width - w_width/75 - attempt_text.get_rect().width),fps_text.get_rect().height+int(w_height/75)))
 
-    level_text = gamedenRE.text(f"level #{loaded_tilemap_file_name}", 15, "Arial", (0,0,0))
+    level_text = gamedenRE.text2(f"level #{loaded_tilemap_file_name}", 1.5*RENDER_SIZE, DEFAULT_FONT, (0,0,0))
     screen.blit(level_text, (int(w_width - w_width/75 - level_text.get_rect().width),fps_text.get_rect().height+attempt_text.get_rect().height+int(w_height/75)))
 
     pygame.display.flip()

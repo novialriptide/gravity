@@ -68,9 +68,15 @@ def get_v_movement(degree,speed):
     y_distance = math.sin(radian)*speed
     return [x_distance, y_distance]
 
-def text(text,size,font,color):
+def text(text: str, size: int, sys_font: str, color: str):
     pygame.font.init()
-    formatting = pygame.font.SysFont(font,size)
+    formatting = pygame.font.SysFont(sys_font,int(size))
+    text_surface = formatting.render(text,True,color)
+    return text_surface
+
+def text2(text: str, size: int, font: str, color: str):
+    pygame.font.init()
+    formatting = pygame.font.Font(font,int(size))
     text_surface = formatting.render(text,True,color)
     return text_surface
 
