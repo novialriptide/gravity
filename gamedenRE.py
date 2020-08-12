@@ -11,7 +11,6 @@ as casting rays, render text, and carry out button functions.
 import pygame
 import os
 import json
-import numpy
 import math
 import pymunk
 
@@ -98,14 +97,6 @@ def convert_tiledjson(path):
         "invisible_layers": []
     }
     return tilemap
-
-def grayscale(img):
-    """Heavy function, turns an image to black and white"""
-    arr = pygame.surfarray.array3d(img)
-
-    avgs = [[(r*0.298 + g*0.587 + b*0.114) for (r,g,b) in col] for col in arr]
-    arr = numpy.array([[[avg,avg,avg] for avg in col] for col in avgs])
-    return pygame.surfarray.make_surface(arr)
 
 class button:
     def __init__(self, rect: pygame.Rect):
