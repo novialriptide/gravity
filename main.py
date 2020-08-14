@@ -4,26 +4,28 @@ BUILD_VERSION = 1
 ##############################################
 import os
 os.system("pip install -r requirements.txt")
-
 import sys
 import json
 
-import gamedenRE
-import messaging
+import assets.gamedenRE as gamedenRE
+import assets.messaging as messaging
 
 import pygame
 import pymunk
+
+from pathlib import Path
+MAIN_DIRECTORY_PATH = f"C:\\Users\\{os.getenv('username')}\\Documents\\GRAVITY\\"
 
 # rendering constants
 SCREEN_SIZE = (500,500)
 RENDER_SIZE = 10
 
 # image constants
-NOISE_TEXTURE_IMAGE_PATH = "textures/parallax/noise.png"
+NOISE_TEXTURE_IMAGE_PATH = MAIN_DIRECTORY_PATH + "textures/parallax/noise.png"
 NOISE_TEXTURE_IMAGE = pygame.image.load(NOISE_TEXTURE_IMAGE_PATH)
 NOISE_TEXTURE_IMAGE.set_alpha(40)
 
-LOGO_IMAGE_PATH = "textures/logos/logo_trans.png"
+LOGO_IMAGE_PATH = MAIN_DIRECTORY_PATH + "textures/logos/logo_trans.png"
 LOGO_IMAGE = pygame.image.load(LOGO_IMAGE_PATH)
 
 # tile constants
@@ -33,7 +35,7 @@ START_TILE_ID = 4
 
 # vars
 game_console = messaging.channel()
-OFFICIAL_LEVELS = os.listdir("levels")
+OFFICIAL_LEVELS = os.listdir(MAIN_DIRECTORY_PATH + "levels")
 OFFICIAL_LEVELS.remove("title.json")
 attempt_number = 0
 camera_movement = True
@@ -90,7 +92,7 @@ def load_player_entity():
 load_player_entity()
 
 # tile map setup
-default_tileset = gamedenRE.tileset("textures/tilesets/1.png", (10,10))
+default_tileset = gamedenRE.tileset(MAIN_DIRECTORY_PATH + "textures/tilesets/1.png", (10,10))
 map_pos = [0,0]
 loaded_tileset = None
 loaded_tilemap = None
