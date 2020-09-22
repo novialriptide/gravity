@@ -14,7 +14,7 @@ import pygame
 import pymunk
 
 from pathlib import Path
-MAIN_DIRECTORY_PATH = f"C:\\Users\\{os.getenv('username')}\\Documents\\GRAVITY\\"
+MAIN_DIRECTORY_PATH = f"{os.getcwd()}/assets/"
 
 # rendering constants
 SCREEN_SIZE = (500,500)
@@ -47,7 +47,7 @@ game_won = False
 display_console = False
 display_hud = False
 
-DEFAULT_FONT = "textures/pixel.ttf"
+DEFAULT_FONT = MAIN_DIRECTORY_PATH + "textures/pixel.ttf"
 
 # pygame setup
 pygame.init()
@@ -124,7 +124,7 @@ def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
     loaded_tilemap["invisible_layers"] = [0]
     loaded_tilemap = gamedenRE.tilemap(loaded_tilemap, loaded_tileset)
     loaded_tilemap_image = loaded_tilemap.get_image_map()
-    loaded_tilemap_file_name = tilemap_path.replace("levels/", "").replace(".json", "")
+    loaded_tilemap_file_name = tilemap_path.replace(MAIN_DIRECTORY_PATH + "levels/", "").replace(".json", "")
     t_w, t_h = loaded_tilemap_image.get_rect().width, loaded_tilemap_image.get_rect().height
     loaded_tilemap_image = pygame.transform.scale(loaded_tilemap_image, (int(t_w*RENDER_SIZE), int(t_h*RENDER_SIZE)))
     execute_data_points(loaded_tilemap, 0)
@@ -211,7 +211,7 @@ def camera_focus_on_goal(layer: int):
                 camera_pos = [t_width*column*RENDER_SIZE+(t_width*RENDER_SIZE)/2, t_height*row*RENDER_SIZE+(t_height*RENDER_SIZE)/2]
 
 # main game
-load_tilemap(default_tileset, "levels/title.json")
+load_tilemap(default_tileset, MAIN_DIRECTORY_PATH + "levels/title.json")
 load_tilemap_collisions()
 logo_resized = pygame.transform.scale(LOGO_IMAGE, (int(LOGO_IMAGE.get_rect().width*RENDER_SIZE*1/25), int(LOGO_IMAGE.get_rect().height*RENDER_SIZE*1/25)))
 while(True):
@@ -287,7 +287,7 @@ while(True):
             title_screen = False
             unload_tilemap_collisions()
             load_player_entity()
-            load_tilemap(default_tileset, f"levels/1.json")
+            load_tilemap(default_tileset, MAIN_DIRECTORY_PATH + "levels/1.json")
             load_tilemap_collisions()
             camera_focus_on_goal(1)
             level_selector = False
@@ -307,7 +307,7 @@ while(True):
             if button.is_hovering(mouse_pos) and left_mouse_click_up:
                 unload_tilemap_collisions()
                 load_player_entity()
-                load_tilemap(default_tileset, f"levels/{level}")
+                load_tilemap(default_tileset, MAIN_DIRECTORY_PATH + f"levels/{level}")
                 load_tilemap_collisions()
                 level_selector = False
                 display_hud = True
@@ -350,7 +350,7 @@ while(True):
         button_rect = pygame.Rect(button_pos[0], button_pos[1], text.get_rect().width, text.get_rect().height)
         button = gamedenRE.button(button_rect)
         if left_mouse_click_up and button.is_hovering(mouse_pos):
-            load_tilemap(default_tileset, f"levels/{int(loaded_tilemap_file_name)+1}.json")
+            load_tilemap(default_tileset, MAIN_DIRECTORY_PATH + f"levels/{int(loaded_tilemap_file_name)+1}.json")
             unload_tilemap_collisions()
             load_player_entity()
             load_tilemap_collisions()
