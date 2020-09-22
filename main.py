@@ -8,7 +8,6 @@ import sys
 import json
 
 import assets.gamedenRE as gamedenRE
-import assets.messaging as messaging
 
 import pygame
 import pymunk
@@ -34,7 +33,6 @@ GOAL_TILE_ID = 3
 START_TILE_ID = 4
 
 # vars
-game_console = messaging.channel()
 OFFICIAL_LEVELS = os.listdir(MAIN_DIRECTORY_PATH + "levels")
 OFFICIAL_LEVELS.remove("title.json")
 attempt_number = 0
@@ -110,7 +108,6 @@ def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
 
             # sets the player's spawn position
             if tile_id == 1:
-                game_console.log_raw("positioned the main object in its place")
                 player.body.position = t_width*column*RENDER_SIZE+(t_width*RENDER_SIZE)/2, t_height*row*RENDER_SIZE+(t_height*RENDER_SIZE)/2
 
 def load_tilemap(tileset: gamedenRE.tileset, tilemap_path: str):
@@ -134,16 +131,7 @@ gravity_speed = 5000
 space.gravity = 0,0
 
 # collisions
-def coll_begin(arbiter, space, data):
-    """Two shapes just started touching for the first time this step"""
-    return True
-
-def coll_pre(arbiter, space, data):
-    """Two shapes are touching during this step"""
-    return True
-
 def coll_post(arbiter, space, data):
-    """Two shapes are touching and their collision response has been processed"""
     for shape in arbiter.shapes:
         try: 
             def two():
@@ -164,35 +152,23 @@ def coll_post(arbiter, space, data):
         except AttributeError: pass
     return True
 
-def coll_separate(arbiter, space, data):
-    """Two shapes have just stopped touching for the first time this step"""
-    return True
-
 collision_handler = space.add_default_collision_handler()
-collision_handler.begin = coll_begin
-collision_handler.pre_solve = coll_pre
 collision_handler.post_solve = coll_post
-collision_handler.separate = coll_separate
 
 # game functions
 polys = None
 def load_tilemap_collisions():
     global polys
-    game_console.log_raw("loaded tilemap collisions")
     polys = gamedenRE.add_rects_to_space(space, loaded_tilemap.get_collision_rects((0,0), 1, render_size=RENDER_SIZE))
 
 def unload_tilemap_collisions():
-    game_console.log_raw("unloading tilemap collisions")
     for body in space.bodies:
-        game_console.log_raw(f"unloading: {body}")
         space.remove(body)
 
     for shape in space.shapes:
-        game_console.log_raw(f"unloading: {shape}")
         space.remove(shape)
 
 def game_reset():
-    game_console.log_raw(f"resetting game")
     space.gravity = 0,0
     player.body.velocity = 0,0
     execute_data_points(loaded_tilemap, 0)
@@ -207,7 +183,6 @@ def camera_focus_on_goal(layer: int):
 
             # sets the player's spawn position
             if tile_id == 3:
-                game_console.log_raw("focusing on the goal tile")
                 camera_pos = [t_width*column*RENDER_SIZE+(t_width*RENDER_SIZE)/2, t_height*row*RENDER_SIZE+(t_height*RENDER_SIZE)/2]
 
 # main game
@@ -223,30 +198,23 @@ while(True):
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            game_console.log_raw(f"system exit")
             sys.exit()
         if event.type == pygame.VIDEORESIZE:
-            game_console.log_raw(f"resizing screen to {event.w, event.h} from {SCREEN_SIZE}")
             SCREEN_SIZE = event.w, event.h
             screen = pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
         if event.type == pygame.KEYDOWN:
             # changing gravity keys
             if event.key == pygame.K_s: 
                 space.gravity = 0,dt*gravity_speed
-                game_console.log_raw(f"gravity has been set to {space.gravity}")
             if event.key == pygame.K_w: 
                 space.gravity = 0,dt*-gravity_speed
-                game_console.log_raw(f"gravity has been set to {space.gravity}")
             if event.key == pygame.K_a: 
                 space.gravity = dt*-gravity_speed,0
-                game_console.log_raw(f"gravity has been set to {space.gravity}")
             if event.key == pygame.K_d: 
                 space.gravity = dt*gravity_speed,0
-                game_console.log_raw(f"gravity has been set to {space.gravity}")
 
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                game_console.log_raw(f"left mouse button clicked up")
                 left_mouse_click_up = True
 
     # camera movements
