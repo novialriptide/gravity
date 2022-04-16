@@ -309,8 +309,7 @@ class TileMap:
 
 
 class Entity:
-    def __init__(self, body, size, tps=300, tilemap=None):
-        self.tps = tps
+    def __init__(self, body, size, tilemap=None):
         self.tilemap = tilemap
 
         # animations
@@ -331,7 +330,7 @@ class Entity:
             ],
         )
 
-    def set_position(self, position: tuple, tilemap, tilemap_render_size: int = 1):
+    def set_position(self, position: tuple, tilemap):
         x, y = position
         m_x, m_y = tilemap.position
         t_width, t_height = tilemap.tile_size
