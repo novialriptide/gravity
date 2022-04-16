@@ -1,15 +1,11 @@
-"""
-
-GAMEDEN, developed by Andrew Hong
-https://github.com/NovialRiptide
+"""GAMEDEN, developed by Andrew Hong
+https://github.com/novialriptide
 
 This is an engine primarily to store data for entities, 
 tilemaps, and tilesets. It can do many other things such 
 as casting rays, render text, and carry out button functions.
-
 """
 import pygame
-import os
 import json
 import math
 import pymunk
@@ -118,7 +114,7 @@ def convert_tiledjson(path):
     return tilemap
 
 
-class button:
+class Button:
     def __init__(self, rect: pygame.Rect):
         self.rect = rect
 
@@ -138,7 +134,7 @@ class button:
         surface.blit(image, (self.rect.x, self.rect.y))
 
 
-class tileset:
+class TileSet:
     def __init__(self, textures_path: str, tile_size: tuple, tiles_distance: int = 0):
         self.textures = pygame.image.load(textures_path)
         self.tile_size = tile_size
@@ -216,7 +212,7 @@ def add_rects_to_space(space: pymunk.Space, rects: list) -> list:
     return rects
 
 
-class tilemap:
+class TileMap:
     def __init__(self, map_data: dict, tileset):
         self.map_data = map_data
         map_contents = self.map_data["contents"]
@@ -312,7 +308,7 @@ class tilemap:
         return map_surface
 
 
-class entity:
+class Entity:
     def __init__(self, body, size, tps=300, tilemap=None):
         self.tps = tps
         self.tilemap = tilemap
