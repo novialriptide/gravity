@@ -96,7 +96,7 @@ loaded_tilemap_image = None
 loaded_tilemap_file_name = None
 
 
-def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
+def execute_data_points(tilemap: gamedenRE.TileMap, layer: int):
     """currently just marks the spawn point"""
     global player_pos
     m_width, m_height = tilemap.map_size
@@ -113,7 +113,7 @@ def execute_data_points(tilemap: gamedenRE.tilemap, layer: int):
                 )
 
 
-def load_TileMap(tileset: gamedenRE.tileset, tilemap_path: str):
+def load_TileMap(tileset: gamedenRE.TileSet, tilemap_path: str):
     global loaded_tileset
     global loaded_tilemap
     global loaded_tilemap_image
