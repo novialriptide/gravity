@@ -3,7 +3,7 @@
 
 Control the artificial gravity in the room you are in. Use WASD to control the gravity. You are currently in a room where you would need to control the gravity in order to reach your goal. There are a total of 8 levels!
 
-This game uses `GameDen Rewrite` game engine.
+This game uses `GameDen Rewrite (2.1)` game engine: https://github.com/novialriptide/GameDen
 
 ## Links
  - https://www.youtube.com/watch?v=jJ_yXQqErDE
